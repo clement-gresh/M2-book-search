@@ -18,7 +18,7 @@ import java.util.concurrent.Future;
 
 @Service
 @Slf4j
-public class ProcessBooks {
+public class ProcessBook {
     @Autowired
     @Qualifier("restTemplate")
     private RestTemplate restTemplate;
@@ -63,17 +63,17 @@ public class ProcessBooks {
      * @return a URL to download txt
      */
     private String getTextURL(Format format){
-        if (format.getText1() != null){
-            if (format.getText1().endsWith(".txt") || format.getText1().endsWith(".txt.utf-8"))
-                return format.getText1();
+        if (format.getTextUtf() != null){
+            if (format.getTextUtf().endsWith(".txt") || format.getTextUtf().endsWith(".txt.utf-8"))
+                return format.getTextUtf();
         }
-        if (format.getText2() != null) {
-            if (format.getText2().endsWith(".txt") || format.getText2().endsWith(".txt.utf-8"))
-                return format.getText2();
+        if (format.getTextAscii() != null) {
+            if (format.getTextAscii().endsWith(".txt") || format.getTextAscii().endsWith(".txt.utf-8"))
+                return format.getTextAscii();
         }
-        if (format.getText3() != null) {
-            if (format.getText3().endsWith(".txt") || format.getText3().endsWith(".txt.utf-8"))
-                return format.getText3();
+        if (format.getTextPlain() != null) {
+            if (format.getTextPlain().endsWith(".txt") || format.getTextPlain().endsWith(".txt.utf-8"))
+                return format.getTextPlain();
         }
         return null;
     }

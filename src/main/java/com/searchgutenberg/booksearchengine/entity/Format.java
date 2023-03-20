@@ -14,10 +14,10 @@ public class Format implements Serializable {
     @JsonProperty(value = "text/html")
     private String html;
     @JsonProperty(value = "text/plain; charset=utf-8")
-    private String text1;
+    private String textUtf;
     @JsonProperty(value = "text/plain; charset=us-ascii")
-    private String text2;
+    private String textAscii;
     @JsonProperty(value = "text/plain")
-    private String text3;
+    private String textPlain;
 
 }

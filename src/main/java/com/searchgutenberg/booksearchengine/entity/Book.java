@@ -11,7 +11,7 @@ public class Book implements Serializable {
     private int id;
     private String title;
     private Format formats;
-    // URL of txt
+    // URL of book content
     private String text;
     // URL of image
     private String image;

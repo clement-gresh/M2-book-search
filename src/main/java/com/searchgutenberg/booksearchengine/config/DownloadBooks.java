@@ -14,7 +14,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -24,66 +23,47 @@ import java.util.stream.Collectors;
 @EnableAsync
 public class DownloadBooks {
     @Autowired
-    private ProcessBooks processBooks;
+    private ProcessBook processBooks;
 
-    /**
-     * loading books from Gutenberg project, or from file
-     * @param restTemplate a modified RestTemplate
-     * @param httpHeaders HttpHeaders witt accept JSON
-     * @return ArrayList of Book
-     */
+
     @Bean
     public Vector<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
         Vector<Book> library = new Vector<Book>();
 
         // if the books.ser file already exists, load the information of books into a map
-        if (new File("downloadBooks.ser").exists()){
-            log.info("Loading books from file to memory...");
-            ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("downloadBooks.ser"));
-            library = (Vector<Book>) inputStream.readObject();
-            inputStream.close();
-            return library;
-        }
+//        if (new File("downloadBooks.ser").exists()){
+//            log.info("Loading books from file to memory...");
+//            ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("downloadBooks.ser"));
+//            library = (Vector<Book>) inputStream.readObject();
+//            inputStream.close();
+//            return library;
+//        }
 
         // else, download the 1664 books information into a .ser file and download the text of each book into /books/<id>.txt
         log.info("First time use, Downloading 1664 books ...");
         ResponseEntity<GutendexEntity> result = httpRequest.exchange("http://gutendex.com/books?mime_type=text&languages=en", HttpMethod.GET, httpEntity, GutendexEntity.class);
         ArrayList<Book> allBooks;
-        while (library.size() < 1664){
+        while (library.size() < 1){
             allBooks = Objects.requireNonNull(result.getBody()).getResults();
             allBooks = allBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
-            List<Future<Book>> futures = new ArrayList<>();
+          //  List<Future<Book>> futures = new ArrayList<>();
             for (Book book: allBooks){
-                futures.add(processBooks.getBook(book));
+                //futures.add(processBooks.getBook(book));
+                System.out.println("Test get book"+book.getId());
+                library.add(book);
             }
-            Iterator<Future<Book>> iterator = futures.iterator();
-            while (iterator.hasNext()){
-                Future<Book> future = iterator.next();
-                if (future.isDone()){
-                    try {
-                        iterator.remove();
-                        Book b = future.get();
-                        if (b != null)
-                            library.add(b);
-                    } catch (InterruptedException | ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (!iterator.hasNext()) {
-                    iterator = futures.iterator();
-                }
-            }
+
             log.info("progress: " + library.size());
-            String nextURL = result.getBody().getNext();
-            result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);
+          //  String nextURL = result.getBody().getNext();
+           // result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);
         }
         System.out.println();
 
         log.info("Saving " + library.size() + " books from memory to local file...");
-        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("books.ser"));
-        outputStream.writeObject(library);
-        outputStream.flush();
-        outputStream.close();
+//        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("books.ser"));
+//        outputStream.writeObject(library);
+//        outputStream.flush();
+//        outputStream.close();
         return library;
     }
 
