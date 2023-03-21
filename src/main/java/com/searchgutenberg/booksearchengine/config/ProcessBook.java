@@ -11,9 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.Future;
 
 @Service
@@ -23,38 +22,32 @@ public class ProcessBook {
     @Qualifier("restTemplate")
     private RestTemplate restTemplate;
 
+    private ConcurrentHashMap<String, <ArrayList<String>>> tupleIndex;
+
     /**
      * set image's and text's URL for a book object
      * download the text to files in /books/id.txt
      * @param book a book object to be completed init
      * @return Future<Entry<Id of Book, Book>> a Future Task of work on the book object
      */
-    @Async("asyncTaskExecutor")
-    public Future<Book> getBook(Book book){
+
+    public void processBook(Book book){
         Format format = book.getFormats();
         String textURL = getTextURL(format);
         if (textURL == null)
-            return new AsyncResult<>(null);
+            return;
+        /*
         if (format.getImage() != null){
             book.setImage(format.getImage().replace("small", "medium"));
-        }
+        }*/
         book.setText(textURL);
-        try {
-            String text = restTemplate.getForObject(textURL, String.class);
-            if (text == null)
-                return new AsyncResult<>(null);
-            if (text.split("\\s+").length > 10000){
-                PrintWriter printWriter = new PrintWriter(new FileOutputStream("books/" + book.getId() + ".txt"));
-                printWriter.println(text);
-                printWriter.flush();
-                printWriter.close();
-                return new AsyncResult<>(book);
-            }else {
-                return new AsyncResult<>(null);
-            }
-        }catch (HttpClientErrorException | FileNotFoundException ignored){
-        }
-        return new AsyncResult<>(null);
+
+        String text = restTemplate.getForObject(textURL, String.class);
+        if (text == null)
+            return;
+        System.out.println(text);
+
+        return;
     }
 
     /**
@@ -76,5 +69,40 @@ public class ProcessBook {
                 return format.getTextPlain();
         }
         return null;
+    }
+
+    public static HashSet<String> splitBookWords(String content, String language) throws IOException {
+        Set<Character> alphabet = getAlphabet(language);
+        HashSet<String> allWords = new HashSet<>();
+        StringBuilder currentWord = new StringBuilder();
+        for (int i = 0; i < content.length(); i++) { //browsing the text, char by char
+            char c = Character.toLowerCase(content.charAt(i));
+            if (alphabet.contains(c)) { //if current char is in the alphabet (which is not a space, a point, etc)
+                currentWord.append(c); //it is the next char of the current word
+            } else {                   //else we have a word!
+                String wordString = currentWord.toString();
+                currentWord = new StringBuilder();
+                if (!wordString.isEmpty() ) { //if the word is not empty
+                    allWords.add(wordString);
+                }
+            }
+        }
+        String wordString = currentWord.toString();
+        if (!wordString.isEmpty() ) { //if the word is not empty
+            allWords.add(wordString);
+        }
+        return allWords;
+    }
+
+    public static Set<Character> getAlphabet(String language){
+        Set<Character> alphabet;
+        if(language.equals("EN")){
+           alphabet = new HashSet<>(Arrays.asList('a','b','c','d','e','f','g','h','i','j','k','l','m','n'
+                    ,'o','p','q','r','s','t','u','v','w','x','y','z','\'','’','`'));
+        }else{
+            alphabet = new HashSet<>(Arrays.asList('a','b','c','d','e','f','g','h','i','j','k','l','m','n'
+                    ,'o','p','q','r','s','t','u','v','w','x','y','z','à','â','æ','ç','é','è','ê','ë','î','ï','ô','œ','ù','û','ü','ÿ'));
+        }
+        return alphabet;
     }
 }

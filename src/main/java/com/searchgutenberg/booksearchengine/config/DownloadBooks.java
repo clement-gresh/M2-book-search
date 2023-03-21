@@ -2,6 +2,7 @@ package com.searchgutenberg.booksearchengine.config;
 
 import com.searchgutenberg.booksearchengine.entity.Book;
 import com.searchgutenberg.booksearchengine.entity.GutendexEntity;
+import com.searchgutenberg.booksearchengine.repository.BookRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +15,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,12 +23,12 @@ import java.util.stream.Collectors;
 public class DownloadBooks {
     @Autowired
     private ProcessBook processBooks;
-
+    @Autowired
+    private BookRepository bookRepository;
 
     @Bean
     public Vector<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
         Vector<Book> library = new Vector<Book>();
-
         // if the books.ser file already exists, load the information of books into a map
 //        if (new File("downloadBooks.ser").exists()){
 //            log.info("Loading books from file to memory...");
@@ -48,11 +47,16 @@ public class DownloadBooks {
             allBooks = allBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
           //  List<Future<Book>> futures = new ArrayList<>();
             for (Book book: allBooks){
+                bookRepository.save(book);
+                processBooks.processBook(book);
                 //futures.add(processBooks.getBook(book));
                 System.out.println("Test get book"+book.getId());
                 library.add(book);
+                Book test = bookRepository.findBookById(book.getId());
+                if(test != null){
+                    log.info("success!");
+                }
             }
-
             log.info("progress: " + library.size());
           //  String nextURL = result.getBody().getNext();
            // result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);

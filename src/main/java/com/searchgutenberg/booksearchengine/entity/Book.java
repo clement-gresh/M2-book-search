@@ -2,12 +2,17 @@ package com.searchgutenberg.booksearchengine.entity;
 
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Document("library")
 public class Book implements Serializable {
+    @Id
     private int id;
     private String title;
     private Format formats;
