@@ -2,7 +2,9 @@ package com.searchgutenberg.booksearchengine.config;
 
 import com.searchgutenberg.booksearchengine.entity.Book;
 import com.searchgutenberg.booksearchengine.entity.GutendexEntity;
+import com.searchgutenberg.booksearchengine.entity.IndexTableData;
 import com.searchgutenberg.booksearchengine.repository.BookRepository;
+import com.searchgutenberg.booksearchengine.repository.IndexTableDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +17,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.keywordsDictionary;
 
 @Component
 @Slf4j
@@ -26,8 +31,11 @@ public class DownloadBooks {
     @Autowired
     private BookRepository bookRepository;
 
+    @Autowired
+    private IndexTableDataRepository indexTableDataRepository;
+
     @Bean
-    public Vector<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
+    public List<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
         Vector<Book> library = new Vector<Book>();
         // if the books.ser file already exists, load the information of books into a map
 //        if (new File("downloadBooks.ser").exists()){
@@ -37,6 +45,17 @@ public class DownloadBooks {
 //            inputStream.close();
 //            return library;
 //        }
+
+        List<Book>books=bookRepository.findAll();
+        if(books.size()>=5 ){
+            if(keywordsDictionary!=null){return books;}
+            List<IndexTableData> indexTable= indexTableDataRepository.findAll();
+            keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
+           for(IndexTableData line:indexTable){
+               keywordsDictionary.put(line.getToken(),line.getBookIdsKeyFrequence());
+           }
+            return books;
+        }
 
         // else, download the 1664 books information into a .ser file and download the text of each book into /books/<id>.txt
         log.info("First time use, Downloading 1664 books ...");
@@ -58,8 +77,8 @@ public class DownloadBooks {
                 }
             }
             log.info("progress: " + library.size());
-          //  String nextURL = result.getBody().getNext();
-           // result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);
+            String nextURL = result.getBody().getNext();
+            result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);
         }
         System.out.println();
 

@@ -55,7 +55,7 @@ public class KeyWordExtractor {
     /**
      * Buld keyword list using english stop words
      */
-    public static List<KeyWord> buildKeyWordsList(String input) throws IOException {
+    public static List<KeyWord> getBookKeyWords(String input) throws IOException {
 
         TokenStream tokenStream = null;
         try {
@@ -102,7 +102,7 @@ public class KeyWordExtractor {
             while (tokenStream.incrementToken()) {
                 String term = token.toString();
                 // Stem each term
-                String stem = stem(term);
+                String stem = tokenizer(term);
                 if (stem != null) {
                     // Create the keyword or get the existing one if any
                     KeyWord keyword = find(keywords, new KeyWord(stem.replaceAll("-0", "-")));
@@ -142,32 +142,32 @@ public class KeyWordExtractor {
     /**
      * Build the keywords in a .ser file using apache lucene
      */
-    private static void buildKeywordsFile() throws FileNotFoundException, IOException {
-        KeyWordMap kwm = new KeyWordMap();
-        HashMap<String, List<Integer>> mcMap = kwm.getMotCleMap();
-
-        for (int i = 0; i < 1664; i++) {
-            String text = Jaccard.readFile("data", i, StandardCharsets.US_ASCII);
-            List<KeyWord> mcList = buildKeyWordsList(text);
-            for (KeyWord stem : mcList) {
-                List<Integer> ids = mcMap.get(stem.getRoot());
-                if (ids != null) {
-                    ids.add(i);
-                } else {
-                    ids = new ArrayList<>();
-                    ids.add(i);
-                    mcMap.put(stem.getRoot(), ids);
-                }
-            }
-            if(i % 100 == 0) System.out.println("current book : " + i);
-        }
-
-        System.out.println("end, saving the file");
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("keywords.ser"));
-        oos.writeObject(kwm);
-        oos.flush();
-        oos.close();
-    }
+//    private static void buildKeywordsFile() throws FileNotFoundException, IOException {
+//        KeyWordMap kwm = new KeyWordMap();
+//        HashMap<String, List<Integer>> mcMap = kwm.getMotCleMap();
+//
+//        for (int i = 0; i < 1664; i++) {
+//            String text = Jaccard.readFile("data", i, StandardCharsets.US_ASCII);
+//            List<KeyWord> mcList = getBookKeyWords(text);
+//            for (KeyWord stem : mcList) {
+//                List<Integer> ids = mcMap.get(stem.getRoot());
+//                if (ids != null) {
+//                    ids.add(i);
+//                } else {
+//                    ids = new ArrayList<>();
+//                    ids.add(i);
+//                    mcMap.put(stem.getRoot(), ids);
+//                }
+//            }
+//            if(i % 100 == 0) System.out.println("current book : " + i);
+//        }
+//
+//        System.out.println("end, saving the file");
+//        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("keywords.ser"));
+//        oos.writeObject(kwm);
+//        oos.flush();
+//        oos.close();
+//    }
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
