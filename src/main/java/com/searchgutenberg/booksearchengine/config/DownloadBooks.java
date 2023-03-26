@@ -1,10 +1,7 @@
 package com.searchgutenberg.booksearchengine.config;
 
-import com.searchgutenberg.booksearchengine.entity.Book;
-import com.searchgutenberg.booksearchengine.entity.GutendexEntity;
-import com.searchgutenberg.booksearchengine.entity.IndexTableData;
-import com.searchgutenberg.booksearchengine.repository.BookRepository;
-import com.searchgutenberg.booksearchengine.repository.IndexTableDataRepository;
+import com.searchgutenberg.booksearchengine.entity.*;
+import com.searchgutenberg.booksearchengine.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -17,10 +14,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import java.util.stream.Collectors;
 
-import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.keywordsDictionary;
+import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.*;
 
 @Component
 @Slf4j
@@ -34,91 +34,107 @@ public class DownloadBooks {
     @Autowired
     private IndexTableDataRepository indexTableDataRepository;
 
+    @Autowired
+    private IndexTitleDataRepository indexTitleDataRepository;
+
+
+    @Autowired
+    private IndexAuthorDataRepository indexAuthorDataRepository;
+
+    @Autowired
+    private Term2KeywordRepository term2keywordRepository;
+
+
     @Bean
     public List<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
-        Vector<Book> library = new Vector<Book>();
-        // if the books.ser file already exists, load the information of books into a map
-//        if (new File("downloadBooks.ser").exists()){
-//            log.info("Loading books from file to memory...");
-//            ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("downloadBooks.ser"));
-//            library = (Vector<Book>) inputStream.readObject();
-//            inputStream.close();
-//            return library;
-//        }
 
-        List<Book>books=bookRepository.findAll();
-        if(books.size()>=5 ){
-            if(keywordsDictionary!=null){return books;}
+        // if book already stocked in the data base, get them
+        List<Book>library=bookRepository.findAll();
+        //debug change the number of the while to get the number of the book you want
+        if(library.size()>=5 ){
+           // if(keywordsDictionary!=null){return library;}
             List<IndexTableData> indexTable= indexTableDataRepository.findAll();
+            List<IndexTitleData> TitleIndex=indexTitleDataRepository.findAll();
+            List<IndexAuthorData> AuthorIndex=indexAuthorDataRepository.findAll();
+            List<Term2Keyword> term2KeywordList= term2keywordRepository.findAll();
             keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
-           for(IndexTableData line:indexTable){
+            booksTitle=new ConcurrentHashMap<String, Integer>();
+            authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
+            term2KeywordDictionary=new ConcurrentHashMap<>();
+            for(IndexTableData line:indexTable){
                keywordsDictionary.put(line.getToken(),line.getBookIdsKeyFrequence());
-           }
-            return books;
+            }
+            for(IndexTitleData line: TitleIndex){
+                booksTitle.put(line.getTitle(), line.getBookId());
+            }
+            for(IndexAuthorData line:AuthorIndex){
+                authorBooks.put(line.getAuthor(),line.getBooksId());
+            }
+            for(Term2Keyword line:term2KeywordList){
+                term2KeywordDictionary.put(line.getTerm(),line.getKeyword());
+            }
+
+
+
+
+            return library;
         }
 
-        // else, download the 1664 books information into a .ser file and download the text of each book into /books/<id>.txt
+        // else, download the 1664 books information and stock them in DB
+        keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
+        booksTitle=new ConcurrentHashMap<String, Integer>();
+        authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
+        term2KeywordDictionary=new ConcurrentHashMap<>();
+
         log.info("First time use, Downloading 1664 books ...");
         ResponseEntity<GutendexEntity> result = httpRequest.exchange("http://gutendex.com/books?mime_type=text&languages=en", HttpMethod.GET, httpEntity, GutendexEntity.class);
         ArrayList<Book> allBooks;
+        //debug change the number of the while to get the number of the book you want
         while (library.size() < 1){
             allBooks = Objects.requireNonNull(result.getBody()).getResults();
             allBooks = allBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
-          //  List<Future<Book>> futures = new ArrayList<>();
+            List<CompletableFuture<Boolean>> futures = new ArrayList<>();
             for (Book book: allBooks){
-                bookRepository.save(book);
-                processBooks.processBook(book);
-                //futures.add(processBooks.getBook(book));
-                System.out.println("Test get book"+book.getId());
-                library.add(book);
-                Book test = bookRepository.findBookById(book.getId());
-                if(test != null){
-                    log.info("success!");
+                futures.add(processBooks.processBook(book));
+            }
+
+            for (int i=0;i<futures.size();i++){
+                CompletableFuture<Boolean> future=futures.get(i);
+                Boolean resultat=future.join();
+                if(resultat){
+                    library.add(allBooks.get(i));
+                    System.out.println("success load book "+allBooks.get(i).getId());
                 }
             }
             log.info("progress: " + library.size());
+            keywordsDictionary.forEach((token,bookIdsKeyFrequence)->{
+                IndexTableData line=new IndexTableData(token,bookIdsKeyFrequence);
+                indexTableDataRepository.save(line);
+
+            });
+            booksTitle.forEach( (title,id)->{
+                IndexTitleData line=new IndexTitleData(title,id);
+                indexTitleDataRepository.save(line);
+            });
+            authorBooks.forEach( (author,booksId)->{
+                IndexAuthorData line=new IndexAuthorData(author,booksId);
+                indexAuthorDataRepository.save(line);
+            });
+
+            term2KeywordDictionary.forEach( (term,keyword)->{
+                Term2Keyword line=new Term2Keyword(term,keyword);
+                term2keywordRepository.save(line);
+            });
+
+
             String nextURL = result.getBody().getNext();
             result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);
         }
-        System.out.println();
+
 
         log.info("Saving " + library.size() + " books from memory to local file...");
-//        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("books.ser"));
-//        outputStream.writeObject(library);
-//        outputStream.flush();
-//        outputStream.close();
         return library;
     }
 
-    /**
-     * separate the books library to many lists (pageable), each list contains 20 books
-     * @return the PagedListHolder of books ordered by closeness centrality, each page containing 20 books
-     */
 
-    /*
-    @Bean
-    public PagedListHolder<Book> pagedLibrary(Map<Integer, Book> library, Map<Integer, Double> closenessCentrality){
-        List<Book> books = new ArrayList<>();
-        List<Integer> orderedIds = new ArrayList<>(closenessCentrality.keySet());
-        for (Integer id: orderedIds) {
-            books.add(library.get(id));
-        }
-        PagedListHolder<Book> pagedLibrary = new PagedListHolder<>(books);
-        pagedLibrary.setPageSize(20);
-        return pagedLibrary;
-    }
-
-    @Bean
-    public List<Pair<Integer, String>> top100BooksPreview(Map<Integer, Book> library, Map<Integer, Double> closenessCentrality){
-        List<Pair<Integer, String>> result = new ArrayList<>();
-        Set<Integer> ids = closenessCentrality.keySet();
-        int i = 0;
-        for (Integer id: ids){
-            result.add(new Pair<>(id, library.get(id).getTitle()));
-            i++;
-            if (i == 100) break;
-        }
-        return result;
-    }
-     */
 }

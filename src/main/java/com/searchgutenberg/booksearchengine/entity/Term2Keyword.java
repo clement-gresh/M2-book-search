@@ -5,17 +5,11 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 @Data
-@Document("IndexTable")
+@Document("Term2Keyword")
 @AllArgsConstructor
-public class IndexTableData {
-    @Id
-    private String token;
-    private ConcurrentHashMap<Integer,Integer> bookIdsKeyFrequence;
-
-
-
-
+public class Term2Keyword {
+   @Id
+    String term;
+    String keyword;
 }

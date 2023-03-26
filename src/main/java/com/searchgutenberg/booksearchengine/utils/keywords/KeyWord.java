@@ -1,4 +1,4 @@
-package com.searchgutenberg.booksearchengine.keywords;
+package com.searchgutenberg.booksearchengine.utils.keywords;
 
 import lombok.Data;
 
@@ -11,7 +11,7 @@ import java.util.Set;
 public class KeyWord implements Comparable<KeyWord>, Serializable {
     private static final long serialVersionUID = 1L;
     private final String root;
-    private final Set<String> words = new HashSet<String>();
+    private final Set<String> words = new HashSet<>();
     private int frequence = 0;
 
     public KeyWord(String root) {
@@ -26,7 +26,7 @@ public class KeyWord implements Comparable<KeyWord>, Serializable {
 
     @Override
     public int compareTo(KeyWord o) {
-        return Integer.valueOf(o.frequence).compareTo(frequence);
+        return Integer.compare(o.frequence, frequence);
     }
 
 
@@ -45,18 +45,7 @@ public class KeyWord implements Comparable<KeyWord>, Serializable {
     public int hashCode() {
         return Arrays.hashCode(new Object[] { root });
     }
-/*
-    public String getRoot() {
-        return root;
-    }
 
-    public Set<String> getWords() {
-        return words;
-    }
-
-    public int getFrequence() {
-        return frequence;
-    }*/
 
     @Override
     public String toString() {

@@ -2,25 +2,25 @@ package com.searchgutenberg.booksearchengine.config;
 
 import com.searchgutenberg.booksearchengine.entity.Book;
 import com.searchgutenberg.booksearchengine.entity.Format;
-import com.searchgutenberg.booksearchengine.keywords.KeyWord;
-import com.searchgutenberg.booksearchengine.keywords.KeyWordExtractor;
+import com.searchgutenberg.booksearchengine.entity.Person;
+import com.searchgutenberg.booksearchengine.utils.keywords.KeyWord;
+import com.searchgutenberg.booksearchengine.utils.keywords.KeyWordExtractor;
 import com.searchgutenberg.booksearchengine.repository.BookRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.keywordsDictionary;
+import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.*;
 
 @Service
 @Slf4j
@@ -30,28 +30,29 @@ public class ProcessBook {
     private RestTemplate restTemplate;
     @Autowired
     private BookRepository bookRepository;
-    //private ConcurrentHashMap<String, <ArrayList<String>>> tupleIndex;
+
 
     /**
      * set image's and text's URL for a book object
-     * download the text to files in /books/id.txt
+     * index the book,and stock it in the DB
      * @param book a book object to be completed init
-     * @return Future<Entry<Id of Book, Book>> a Future Task of work on the book object
+     * @return a future task to indicate if the book is processed successfully
      */
     @Async("ProcessBookExecutor")
-    public void processBook(Book book) throws IOException {
-        bookRepository.save(book);
-         System.out.println("begin process book "+book.getId());
+    public CompletableFuture<Boolean> processBook(Book book) throws IOException {
+
         Format format = book.getFormats();
         String textURL = getTextURL(format);
         if (textURL == null)
-            return;
+            return CompletableFuture.completedFuture(false);
         book.setText(textURL);
+        if (format.getImage() != null){
+            book.setImage(format.getImage().replace("small", "medium"));
+        }
 
         String text = restTemplate.getForObject(textURL, String.class);
         if (text == null)
-            return;
-       // System.out.println(text);
+            return CompletableFuture.completedFuture(false);
         
         List<KeyWord> keyWordList = KeyWordExtractor.getBookKeyWords(text);
         for (KeyWord kword : keyWordList) {
@@ -59,19 +60,21 @@ public class ProcessBook {
             if (bookIdsKeyFrequence != null) {
                 bookIdsKeyFrequence.put(book.getId(),kword.getFrequence());
             } else {
-                bookIdsKeyFrequence = new ConcurrentHashMap<Integer,Integer>();
+                bookIdsKeyFrequence = new ConcurrentHashMap<>();
                 bookIdsKeyFrequence.put(book.getId(),kword.getFrequence());
                 keywordsDictionary.put(kword.getRoot(), bookIdsKeyFrequence);
             }
         }
+        indexTitleAuthor(book);
+        bookRepository.save(book);
 
-        return;
+        return CompletableFuture.completedFuture(true);
     }
 
     /**
      * get at least one valid URL to download the text of a book
      * @param format the URLs given by "gutendex" api
-     * @return a URL to download txt
+     * @return a valid URL to download txt
      */
     private String getTextURL(Format format){
         if (format.getTextUtf() != null){
@@ -89,38 +92,26 @@ public class ProcessBook {
         return null;
     }
 
-//    public static HashSet<String> splitBookWords(String content, String language) throws IOException {
-//        Set<Character> alphabet = getAlphabet(language);
-//        HashSet<String> allWords = new HashSet<>();
-//        StringBuilder currentWord = new StringBuilder();
-//        for (int i = 0; i < content.length(); i++) { //browsing the text, char by char
-//            char c = Character.toLowerCase(content.charAt(i));
-//            if (alphabet.contains(c)) { //if current char is in the alphabet (which is not a space, a point, etc)
-//                currentWord.append(c); //it is the next char of the current word
-//            } else {                   //else we have a word!
-//                String wordString = currentWord.toString();
-//                currentWord = new StringBuilder();
-//                if (!wordString.isEmpty() ) { //if the word is not empty
-//                    allWords.add(wordString);
-//                }
-//            }
-//        }
-//        String wordString = currentWord.toString();
-//        if (!wordString.isEmpty() ) { //if the word is not empty
-//            allWords.add(wordString);
-//        }
-//        return allWords;
-//    }
-//
-//    public static Set<Character> getAlphabet(String language){
-//        Set<Character> alphabet;
-//        if(language.equals("EN")){
-//           alphabet = new HashSet<>(Arrays.asList('a','b','c','d','e','f','g','h','i','j','k','l','m','n'
-//                    ,'o','p','q','r','s','t','u','v','w','x','y','z','\'','’','`'));
-//        }else{
-//            alphabet = new HashSet<>(Arrays.asList('a','b','c','d','e','f','g','h','i','j','k','l','m','n'
-//                    ,'o','p','q','r','s','t','u','v','w','x','y','z','à','â','æ','ç','é','è','ê','ë','î','ï','ô','œ','ù','û','ü','ÿ'));
-//        }
-//        return alphabet;
-//    }
+    /**
+     * stock the information of a book in index table of title and author
+     * @param book the book to be processed
+     */
+    public void indexTitleAuthor(Book book)  {
+
+            booksTitle.put(book.getTitle().toLowerCase(),book.getId());
+            List<Person>authors=book.getAuthors();
+            for(Person a:authors){
+                ConcurrentLinkedQueue<Integer> booksId=authorBooks.get(a.getName().toLowerCase());
+                if(booksId==null){
+                    booksId=new ConcurrentLinkedQueue<>();
+                    booksId.add(book.getId());
+                    authorBooks.put(a.getName().toLowerCase(),booksId);
+                }else {
+                    booksId.add(book.getId());
+                }
+            }
+
+    }
+
+
 }

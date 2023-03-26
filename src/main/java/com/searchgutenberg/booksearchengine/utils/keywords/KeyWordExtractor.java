@@ -1,4 +1,5 @@
-package com.searchgutenberg.booksearchengine.keywords;
+package com.searchgutenberg.booksearchengine.utils.keywords;
+
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
@@ -12,19 +13,23 @@ import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.analysis.core.StopFilter;
 
+
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.term2KeywordDictionary;
+
+
 public class KeyWordExtractor {
+
     public static String tokenizer(String word) throws IOException {
 
         TokenStream tokenStream = null;
         try {
-            // We tokenize the input
+            // tokenize the input
             tokenStream = new ClassicTokenizer(Version.LUCENE_40, new StringReader(word));
-            // stem
+            // get the stem of the input as token
             tokenStream = new PorterStemFilter(tokenStream);
             // Add each token in a set, so that duplicates are removed
             Set<String> tokens = new HashSet<String>();
@@ -53,7 +58,7 @@ public class KeyWordExtractor {
     }
 
     /**
-     * Buld keyword list using english stop words
+     * Get the keyword list  of a book using english stop words
      */
     public static List<KeyWord> getBookKeyWords(String input) throws IOException {
 
@@ -70,6 +75,7 @@ public class KeyWordExtractor {
             // Replace most common english contractions
             input = input.replaceAll("(?:'(?:[tdsm]|[vr]e|ll))+\\b", "");
 
+
             // tokenize input
             tokenStream = new ClassicTokenizer(Version.LUCENE_40, new StringReader(input));
 
@@ -82,8 +88,7 @@ public class KeyWordExtractor {
             // convert any char to ASCII
             tokenStream = new ASCIIFoldingFilter(tokenStream);
 
-            // We remove the english stop words (ignored words because they are too common)
-            // We build more stop words on top of the default set (like gutenberg)
+            // remove the english stop words (common words which don't have special meaning )
             Scanner s = new Scanner(new File("stopWords.txt"));
             ArrayList<String> stopWordsList = new ArrayList<>();
             while(s.hasNextLine()) {
@@ -101,19 +106,24 @@ public class KeyWordExtractor {
             tokenStream.reset();
             while (tokenStream.incrementToken()) {
                 String term = token.toString();
-                // Stem each term
+
+                // remove the word which are too short
+                if(term.length()<3){continue;}
+
                 String stem = tokenizer(term);
+
                 if (stem != null) {
                     // Create the keyword or get the existing one if any
                     KeyWord keyword = find(keywords, new KeyWord(stem.replaceAll("-0", "-")));
                     // Add its corresponding initial token
                     keyword.add(term.replaceAll("-0", "-"));
+                    term2KeywordDictionary.put(term.replaceAll("-0", "-"),stem.replaceAll("-0", "-"));
                 }
             }
 
-            // Reverse sort by frequency
+            // sort the keyword by its frequency
             Collections.sort(keywords);
-            // We keep the 50 most used keywords per text
+            // We keep the 50 most used keywords per book
             keywords = keywords.stream().limit(50).collect(Collectors.toList());
             return keywords;
 
@@ -128,58 +138,17 @@ public class KeyWordExtractor {
     /**
      * Generic algorithm to search through a collection
      */
-    public static <T> T find(Collection<T> collection, T example) {
+    public static <T> T find(Collection<T> collection, T target) {
         for (T element : collection) {
-            if (element.equals(example)) {
+            if (element.equals(target)) {
                 return element;
             }
         }
-        collection.add(example);
-        return example;
+        collection.add(target);
+        return target;
     }
 
 
-    /**
-     * Build the keywords in a .ser file using apache lucene
-     */
-//    private static void buildKeywordsFile() throws FileNotFoundException, IOException {
-//        KeyWordMap kwm = new KeyWordMap();
-//        HashMap<String, List<Integer>> mcMap = kwm.getMotCleMap();
-//
-//        for (int i = 0; i < 1664; i++) {
-//            String text = Jaccard.readFile("data", i, StandardCharsets.US_ASCII);
-//            List<KeyWord> mcList = getBookKeyWords(text);
-//            for (KeyWord stem : mcList) {
-//                List<Integer> ids = mcMap.get(stem.getRoot());
-//                if (ids != null) {
-//                    ids.add(i);
-//                } else {
-//                    ids = new ArrayList<>();
-//                    ids.add(i);
-//                    mcMap.put(stem.getRoot(), ids);
-//                }
-//            }
-//            if(i % 100 == 0) System.out.println("current book : " + i);
-//        }
-//
-//        System.out.println("end, saving the file");
-//        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("keywords.ser"));
-//        oos.writeObject(kwm);
-//        oos.flush();
-//        oos.close();
-//    }
 
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-        // buildKeywordsFile();
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("keywords.ser"));
-        KeyWordMap kwm = (KeyWordMap) ois.readObject();
-        ois.close();
-
-		/* HashMap<String, List<Integer>> map = mcm.getMotCleMap();
-		map.entrySet().removeIf(e -> map.get(e.getKey()).size() > 30); */
-
-        System.out.println(kwm.toString());
-
-    }
 }
