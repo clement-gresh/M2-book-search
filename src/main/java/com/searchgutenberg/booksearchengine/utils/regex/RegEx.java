@@ -2,6 +2,7 @@ package com.searchgutenberg.booksearchengine.utils.regex;
 
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RegEx{
     //MACROS
@@ -22,6 +23,7 @@ public class RegEx{
 
     //CONSTRUCTOR
     public RegEx(){}
+
 
     //MAIN
 //    public static void main(String arg[]) throws IOException {
@@ -117,7 +119,7 @@ public class RegEx{
 //    }
 
     //FROM REGEX TO SYNTAX TREE
-    private static RegExTree parse() throws Exception {
+    public static RegExTree parse(String regEx) throws Exception {
         //BEGIN DEBUG: set conditionnal to true for debug example
         if (false) throw new Exception();
         RegExTree example = exampleAhoUllman();
@@ -290,7 +292,7 @@ public class RegEx{
         return new RegExTree(ALTERN, subTrees);
     }
 
-    private static NDFAutomaton step2_AhoUllman(RegExTree ret) {
+    public static NDFAutomaton step2_AhoUllman(RegExTree ret) {
 
         if (ret.subTrees.isEmpty()) {
             //IMPLICIT REPRESENTATION HERE: INIT STATE IS ALWAYS 0; FINAL STATE IS ALWAYS transitionTable.length-1
@@ -390,7 +392,7 @@ public class RegEx{
 
         return null;
     }
-    private static DFA step3_ToDFA(NDFAutomaton ndf) {
+    public static DFA step3_ToDFA(NDFAutomaton ndf) {
 
         int[][] transitionTable = ndf.transitionTable; //ASCII transition
         ArrayList<Integer>[] epsilonTransitionTable = ndf.epsilonTransitionTable;
@@ -475,12 +477,11 @@ public class RegEx{
 
 
 
-    private static ArrayList<Integer> step5_match(DFA automate,ArrayList<String> inputText)throws Exception{
-        ArrayList<Integer> matchedlines=new ArrayList<>();
+    public static HashSet<String> step5_match(DFA automate, ConcurrentHashMap<String, String> term2KeywordDictionary)throws Exception{
+        HashSet<String> stemsFound=new HashSet<>();
         int[][] tarnsitions=automate.getTransition();
         // traverse all the lines of input text
-        for( int i=0;i<inputText.size();i++){
-            String line=inputText.get(i);
+        for( String line:term2KeywordDictionary.keySet()){
             if(line==null) continue;
             LINE:
             for(int index=0;index<line.length();index++){
@@ -495,7 +496,7 @@ public class RegEx{
                 while (interIndex<line.length()) {
                     //if we reach the final state of automaton, it means we find a matched word
                     if(automate.getSetFinal().contains(nextIndex)){
-                        matchedlines.add(i);
+                        stemsFound.add(term2KeywordDictionary.get(line));
                         break LINE;
                     }
                     //if we can't find the transition specific, that means we should match the word from the next index of the current line(attribute interIndex)
@@ -510,11 +511,11 @@ public class RegEx{
 
         }
 
-        return matchedlines;
+        return stemsFound;
     }
 
-    private static ArrayList<Integer>kmp(String regEx,ArrayList<String>inputText){
-        ArrayList<Integer>matchedlines=new ArrayList<Integer>();
+    public static HashSet<String>kmp(String regEx, ConcurrentHashMap<String, String> term2KeywordDictionary){
+        HashSet<String>stemFound=new HashSet<String>();
         int [] carryOver=new int[regEx.length()+1];
         carryOver[0]=-1;
         carryOver[1]=0;
@@ -555,9 +556,7 @@ public class RegEx{
         };
 
         //use carryOver matching
-        for( int i=0;i<inputText.size();i++){
-            String line=inputText.get(i);
-            if(line==null) continue;
+        for( String line:term2KeywordDictionary.keySet()){
             //The index of the curent line being checked
             int currentIndex=0;
             //The index of factory being matched
@@ -567,7 +566,7 @@ public class RegEx{
                     currentIndex++;
                     facIndex++;
                     if(facIndex==factory.length){
-                        matchedlines.add(i);
+                        stemFound.add(term2KeywordDictionary.get(line));
                         break;
                     }
                 }else {
@@ -579,8 +578,11 @@ public class RegEx{
 
         }
 
-        return matchedlines;
+        return stemFound;
     }
 
 
+    public static void setRegEx(String regEx) {
+        RegEx.regEx = regEx;
+    }
 }

@@ -2,6 +2,10 @@ package com.searchgutenberg.booksearchengine.service;
 
 import com.searchgutenberg.booksearchengine.entity.Book;
 import com.searchgutenberg.booksearchengine.repository.BookRepository;
+import com.searchgutenberg.booksearchengine.utils.regex.DFA;
+import com.searchgutenberg.booksearchengine.utils.regex.NDFAutomaton;
+import com.searchgutenberg.booksearchengine.utils.regex.RegEx;
+import com.searchgutenberg.booksearchengine.utils.regex.RegExTree;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +52,27 @@ public class SearchBookService {
         }
         return booksId;
     }
+    public  HashMap<Integer,Integer> getBooksByRegex(String input) throws Exception {
+
+        String regEx=input;
+        HashSet<String>stems;
+        if (!regEx.contains("*") && !regEx.contains("|")) {
+                stems = RegEx.kmp(regEx, term2KeywordDictionary);
+        }else {
+            RegExTree ret = RegEx.parse(regEx);
+            NDFAutomaton ndf = RegEx.step2_AhoUllman(ret);
+            DFA dfa = RegEx.step3_ToDFA(ndf);
+            stems=RegEx.step5_match(dfa, term2KeywordDictionary);
+        }
+        HashMap<Integer,Integer> bookIdsKeyFrequence=new HashMap<>();
+        for(String stem:stems){
+            bookIdsKeyFrequence.putAll(keywordsDictionary.get(stem));
+        }
+
+
+        return bookIdsKeyFrequence;
+    }
+
 
 
     public List<Book> getSortedBooks(HashMap<Integer, Integer>bookIdsKeyFrequence, Boolean closenessFlag) {

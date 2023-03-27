@@ -55,8 +55,10 @@ public class ProcessBook {
             return CompletableFuture.completedFuture(false);
         
         List<KeyWord> keyWordList = KeyWordExtractor.getBookKeyWords(text);
+
         for (KeyWord kword : keyWordList) {
             ConcurrentHashMap<Integer,Integer> bookIdsKeyFrequence = keywordsDictionary.get(kword.getRoot());
+            term2KeywordDictionary.put(kword.toString(),kword.getRoot());
             if (bookIdsKeyFrequence != null) {
                 bookIdsKeyFrequence.put(book.getId(),kword.getFrequence());
             } else {

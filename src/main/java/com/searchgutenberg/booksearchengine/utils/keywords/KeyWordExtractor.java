@@ -18,7 +18,7 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.term2KeywordDictionary;
+
 
 
 public class KeyWordExtractor {
@@ -117,7 +117,6 @@ public class KeyWordExtractor {
                     KeyWord keyword = find(keywords, new KeyWord(stem.replaceAll("-0", "-")));
                     // Add its corresponding initial token
                     keyword.add(term.replaceAll("-0", "-"));
-                    term2KeywordDictionary.put(term.replaceAll("-0", "-"),stem.replaceAll("-0", "-"));
                 }
             }
 
