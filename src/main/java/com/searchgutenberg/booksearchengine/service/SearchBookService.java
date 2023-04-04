@@ -116,4 +116,10 @@ public class SearchBookService {
         }
     }
 
+    public Book getBookById(int id){
+       Book book= bookRepository.findBookById(id);
+       return book;
+
+    }
+
 }

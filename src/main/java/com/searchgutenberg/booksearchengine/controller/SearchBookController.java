@@ -118,6 +118,16 @@ public class SearchBookController {
         List<Book> books= searchBookService.getTop20Books();
         return ResponseEntity.ok(books);
     }
+    @GetMapping("/getbook/{id}")
+    @ResponseBody
+    public ResponseEntity<Book> searchBookById(@PathVariable String id)  {
+
+        Book book= searchBookService.getBookById(Integer.parseInt(id));
+        return ResponseEntity.ok(book);
+
+    }
+
+
 
 
 
