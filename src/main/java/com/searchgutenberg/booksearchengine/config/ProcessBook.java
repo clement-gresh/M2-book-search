@@ -71,7 +71,11 @@ public class ProcessBook {
 
         for (KeyWord kword : keyWordList) {
             ConcurrentHashMap<Integer,Integer> bookIdsKeyFrequence = keywordsDictionary.get(kword.getRoot());
-            term2KeywordDictionary.put(kword.toString(),kword.getRoot());
+            for(String word :kword.getWords()){
+                term2KeywordDictionary.put(word,kword.getRoot());
+            }
+
+
             if (bookIdsKeyFrequence != null) {
                 bookIdsKeyFrequence.put(book.getId(),kword.getFrequence());
             } else {

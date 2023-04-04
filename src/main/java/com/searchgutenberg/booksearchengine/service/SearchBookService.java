@@ -106,4 +106,20 @@ public class SearchBookService {
         return  books;
     }
 
+    public List<Book> getTop20Books(){
+        List<Book> books=new ArrayList<>();
+        books=bookRepository.findAll();
+        if(books.size()<20 ){
+            return  books;
+        }else {
+            return books.subList(0,19);
+        }
+    }
+
+    public Book getBookById(int id){
+       Book book= bookRepository.findBookById(id);
+       return book;
+
+    }
+
 }
