@@ -32,6 +32,9 @@ public class DownloadBooks {
     private BookRepository bookRepository;
 
     @Autowired
+    private BookGraphRepository bookGraphRepository;
+
+    @Autowired
     private IndexTableDataRepository indexTableDataRepository;
 
     @Autowired
@@ -106,6 +109,18 @@ public class DownloadBooks {
                     System.out.println("success load book "+allBooks.get(i).getId());
                 }
             }
+
+            // Saving Jaccard Graph in the DB
+            bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
+                BookGraphData line = new BookGraphData(key, value);
+//                System.out.println(
+//                        "New book id: " + line.getBookId()
+//                                + " (id: " + 1513 + ", "
+//                                + line.getJaccardDistance().get(1513) + ")"
+//                );
+                bookGraphRepository.save(line);
+            });
+
             log.info("progress: " + library.size());
             keywordsDictionary.forEach((token,bookIdsKeyFrequence)->{
                 IndexTableData line=new IndexTableData(token,bookIdsKeyFrequence);

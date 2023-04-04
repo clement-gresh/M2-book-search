@@ -56,6 +56,19 @@ public class ProcessBook {
         
         List<KeyWord> keyWordList = KeyWordExtractor.getBookKeyWords(text);
 
+        // Creating Jaccard Graph
+        HashMap<Integer, Float> jaccardDistance = new HashMap<>();
+        jaccardDistance.put(book.getId(), 1F);
+        bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
+            float distance = BookGraph.computeDistance(keyWordList, keywordsDictionary, key);
+            jaccardDistance.put(key, distance);
+        });
+        bookGraph.addBook(book.getId(), jaccardDistance);
+//        System.out.println(
+//                "New book id: " + book.getId()
+//                + " (id: " + 1513 + ", " + bookGraph.getAdjacencyMatrix().get(book.getId()).get(1513) + ")"
+//        );
+
         for (KeyWord kword : keyWordList) {
             ConcurrentHashMap<Integer,Integer> bookIdsKeyFrequence = keywordsDictionary.get(kword.getRoot());
             term2KeywordDictionary.put(kword.toString(),kword.getRoot());

@@ -1,15 +1,12 @@
 package com.searchgutenberg.booksearchengine.controller;
 
 import com.searchgutenberg.booksearchengine.entity.Book;
-import com.searchgutenberg.booksearchengine.utils.keywords.KeyWordExtractor;
 import com.searchgutenberg.booksearchengine.service.SearchBookService;
-import com.sun.istack.internal.NotNull;
-import org.apache.tomcat.util.json.ParseException;
+import com.searchgutenberg.booksearchengine.utils.keywords.KeyWordExtractor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.util.*;
 
