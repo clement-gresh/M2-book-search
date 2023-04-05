@@ -65,17 +65,4 @@ public class BookGraph {
         sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
         return sortedEntries;
     }
-   /* SortedSet<Map.Entry<Integer, Float>> booksSortedByDistance(Integer bookId) {
-        SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
-                new Comparator<Map.Entry<Integer, Float>>() {
-                    @Override
-                    public int compare(Map.Entry<Integer, Float> e1, Map.Entry<Integer, Float> e2) {
-                        int res = e1.getValue().compareTo(e2.getValue());
-                        return res != 0 ? res : 1;
-                    }
-                }
-        );
-        sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
-        return sortedEntries;
-    }*/
 }

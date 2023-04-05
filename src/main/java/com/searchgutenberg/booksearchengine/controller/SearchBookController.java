@@ -3,15 +3,15 @@ package com.searchgutenberg.booksearchengine.controller;
 import com.searchgutenberg.booksearchengine.entity.Book;
 import com.searchgutenberg.booksearchengine.service.SearchBookService;
 import com.searchgutenberg.booksearchengine.utils.keywords.KeyWordExtractor;
-import org.apache.tomcat.util.json.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @CrossOrigin
 @RestController
@@ -37,9 +37,6 @@ public class SearchBookController {
         });
 
         List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
-        for (int i = 0; i < books.size(); i++) {
-            System.out.println("id: " + books.get(i).getId());  // DEBUG
-        }
         return ResponseEntity.ok(books);
     }
 
@@ -83,7 +80,6 @@ public class SearchBookController {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
         });
         List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
         return ResponseEntity.ok(books);

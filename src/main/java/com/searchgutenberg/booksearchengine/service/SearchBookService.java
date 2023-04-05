@@ -78,6 +78,7 @@ public class SearchBookService {
         List<Book> books = new ArrayList<>();
         Map<Integer, HashMap<Integer, Float>> nbKeywordsIdCloseness = new HashMap<>();
 
+        // Transforming a map(id, nbOfKeyword) in a map(nbOfKeyword (id, closeness))
         booksIdNbOfKeywords.forEach((key, value) -> {
             float closeness = bookGraph.getClosenessCentrality().get(key);
 
@@ -89,25 +90,24 @@ public class SearchBookService {
                 }});
             }
         });
+        // Sorting the map by decreasing number of keywords
         LinkedHashMap<Integer, HashMap<Integer, Float>> sortedByKeywordNb =
                 nbKeywordsIdCloseness.entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey())
+                        .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
                         .collect(Collectors.toMap(
                                 Map.Entry::getKey,
                                 Map.Entry::getValue,
                                 (oldValue, newValue) -> oldValue,
                                 LinkedHashMap::new
                         ));
+        // For a given number of keywords, sorting the ids by decreasing closeness
         sortedByKeywordNb.forEach((key, IdCloseness) -> {
             SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
-                    Map.Entry.comparingByValue()
+                    Map.Entry.comparingByValue(Comparator.reverseOrder())
             );
             sortedEntries.addAll(IdCloseness.entrySet());
             sortedEntries.forEach(e -> books.add(bookRepository.findBookById(e.getKey())));
         });
-
-        System.out.println("sortedByKeywordNb: " + sortedByKeywordNb);  // DEBUG
-
         return books;
 
 //        SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
