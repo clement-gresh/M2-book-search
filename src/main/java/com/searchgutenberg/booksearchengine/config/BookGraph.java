@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BookGraph {
     // dict(book : dict(book, distance))
     private Map<Integer, Map<Integer, Float>> adjacencyMatrix = new HashMap<>();
+    private Map<Integer, Float> closenessCentrality = new HashMap<>();
 
     // jaccardDistance must have an entry with the newbook itself at 1
     public void addBook(Integer newBook, Map<Integer, Float> jaccardDistance){
@@ -42,6 +43,14 @@ public class BookGraph {
         int union = keyWordList.size() + bookKeywordNb.get() - intersection;
 
         return 1 - (float) intersection/union;
+    }
+
+    public void computeCloseness(){
+        int size = adjacencyMatrix.size();
+        adjacencyMatrix.forEach((key, value) -> {
+            double sum = value.values().stream().mapToDouble(e -> Double.parseDouble(String.valueOf(e))).sum();
+            closenessCentrality.put(key, (float) ((size - 1) / sum));
+        });
     }
 
     SortedSet<Map.Entry<Integer, Float>> booksSortedByDistance(Integer bookId) {

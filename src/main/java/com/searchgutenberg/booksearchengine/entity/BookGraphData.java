@@ -14,4 +14,5 @@ public class BookGraphData {
     @Id
     private Integer bookId;
     private Map<Integer, Float> jaccardDistance;
+    private Float closenessCentrality;
 }

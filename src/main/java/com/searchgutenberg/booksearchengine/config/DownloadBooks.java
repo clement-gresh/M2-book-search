@@ -111,8 +111,11 @@ public class DownloadBooks {
             }
 
             // Saving Jaccard Graph in the DB
+            bookGraph.computeCloseness();;
+
             bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
-                BookGraphData line = new BookGraphData(key, value);
+                float closenessCentrality = bookGraph.getClosenessCentrality().get(key);
+                BookGraphData line = new BookGraphData(key, value, closenessCentrality);
 //                System.out.println(
 //                        "New book id: " + line.getBookId()
 //                                + " (id: " + 1513 + ", "
