@@ -74,6 +74,65 @@ public class SearchBookService {
     }
 
 
+    public List<Book> sortBooksByCloseness(HashMap<Integer, Integer> booksIdNbOfKeywords) {
+        List<Book> books = new ArrayList<>();
+        Map<Integer, HashMap<Integer, Float>> nbKeywordsIdCloseness = new HashMap<>();
+
+        booksIdNbOfKeywords.forEach((key, value) -> {
+            float closeness = bookGraph.getClosenessCentrality().get(key);
+
+            if (nbKeywordsIdCloseness.containsKey(value)) {
+                nbKeywordsIdCloseness.get(value).put(key, closeness);
+            } else {
+                nbKeywordsIdCloseness.put(value, new HashMap<Integer, Float>() {{
+                    put(key, closeness);
+                }});
+            }
+        });
+        LinkedHashMap<Integer, HashMap<Integer, Float>> sortedByKeywordNb =
+                nbKeywordsIdCloseness.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue,
+                                (oldValue, newValue) -> oldValue,
+                                LinkedHashMap::new
+                        ));
+        sortedByKeywordNb.forEach((key, IdCloseness) -> {
+            SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
+                    Map.Entry.comparingByValue()
+            );
+            sortedEntries.addAll(IdCloseness.entrySet());
+            sortedEntries.forEach(e -> books.add(bookRepository.findBookById(e.getKey())));
+        });
+
+        System.out.println("sortedByKeywordNb: " + sortedByKeywordNb);  // DEBUG
+
+        return books;
+
+//        List<Book> books=new ArrayList<>();
+//        Map<Integer, List<Integer>> nbKeywordsIdCloseness = new HashMap<>();
+
+//        booksIdNbOfKeywords.forEach((key, value) -> {
+//            if(nbOfKeywordsBooksId.containsKey(value)) {
+//                nbOfKeywordsBooksId.get(value).add(key);
+//            } else {
+//                nbOfKeywordsBooksId.put(value, new ArrayList<>(Collections.singletonList(key)));
+//            }
+//        });
+//        int count = 0;
+//
+//        SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
+//                new Comparator<Map.Entry<Integer, Float>>() {
+//                    @Override
+//                    public int compare(Map.Entry<Integer, Float> e1, Map.Entry<Integer, Float> e2) {
+//                        int res = e1.getValue().compareTo(e2.getValue());
+//                        return res != 0 ? res : 1;
+//                    }
+//                }
+//        );
+//        sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
+    }
 
     public List<Book> getSortedBooks(HashMap<Integer, Integer>bookIdsKeyFrequence, Boolean closenessFlag) {
        List<Book> books=new ArrayList<>();

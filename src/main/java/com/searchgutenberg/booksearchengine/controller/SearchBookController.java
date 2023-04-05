@@ -23,17 +23,23 @@ public class SearchBookController {
     public ResponseEntity<List<Book>> searchBookByContent(@PathVariable String word) {
 
         String[] keywords = word.split("\\s+");
-        HashMap<Integer,Integer>bookIdsKeyFrequence=new HashMap<>();
+        HashMap<Integer,Integer> booksIdNbOfKeywords = new HashMap<>();
         Arrays.asList(keywords).forEach(keyword -> {
             try {
                 keyword =  KeyWordExtractor.tokenizer(keyword);
             } catch (IOException e) {
 
             }
-            bookIdsKeyFrequence.putAll(searchBookService.getBooksByContent(keyword.toLowerCase()));
+            searchBookService.getBooksByContent(keyword.toLowerCase()).forEach((key, value) -> {
+                int nbOfKeywords = (booksIdNbOfKeywords.containsKey(key)) ? booksIdNbOfKeywords.get(key) + 1 : 1;
+                booksIdNbOfKeywords.put(key, nbOfKeywords);
+            });
         });
 
-        List<Book> books= searchBookService.getSortedBooks(bookIdsKeyFrequence,false);
+        List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
+        for (int i = 0; i < books.size(); i++) {
+            System.out.println("id: " + books.get(i).getId());  // DEBUG
+        }
         return ResponseEntity.ok(books);
     }
 
