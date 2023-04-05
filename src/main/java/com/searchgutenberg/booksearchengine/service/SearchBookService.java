@@ -110,18 +110,6 @@ public class SearchBookService {
 
         return books;
 
-//        List<Book> books=new ArrayList<>();
-//        Map<Integer, List<Integer>> nbKeywordsIdCloseness = new HashMap<>();
-
-//        booksIdNbOfKeywords.forEach((key, value) -> {
-//            if(nbOfKeywordsBooksId.containsKey(value)) {
-//                nbOfKeywordsBooksId.get(value).add(key);
-//            } else {
-//                nbOfKeywordsBooksId.put(value, new ArrayList<>(Collections.singletonList(key)));
-//            }
-//        });
-//        int count = 0;
-//
 //        SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
 //                new Comparator<Map.Entry<Integer, Float>>() {
 //                    @Override

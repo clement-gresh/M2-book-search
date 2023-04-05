@@ -71,11 +71,13 @@ public class SearchBookController {
         String input=requestBody.get("regex");
 
         String[] keywords = input.split("\\s+");
-        HashMap<Integer,Integer>bookIdsKeyFrequence=new HashMap<>();
+        HashMap<Integer, Integer> booksIdNbOfKeywords = new HashMap<>();
         Arrays.asList(keywords).forEach(keyword -> {
             try {
-                System.out.println("debug "+keyword.toLowerCase());
-                bookIdsKeyFrequence.putAll(searchBookService.getBooksByRegex(keyword.toLowerCase()));
+                searchBookService.getBooksByRegex(keyword.toLowerCase()).forEach((key, value) -> {
+                    int nbOfKeywords = (booksIdNbOfKeywords.containsKey(key)) ? booksIdNbOfKeywords.get(key) + 1 : 1;
+                    booksIdNbOfKeywords.put(key, nbOfKeywords);
+                });
             } catch (IOException e) {
 
             } catch (Exception e) {
@@ -83,8 +85,7 @@ public class SearchBookController {
             }
 
         });
-
-        List<Book> books= searchBookService.getSortedBooks(bookIdsKeyFrequence,false);
+        List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
         return ResponseEntity.ok(books);
     }
 
@@ -93,12 +94,15 @@ public class SearchBookController {
     public ResponseEntity<List<Book>> searchBookByTitle(@PathVariable String title)  {
 
         String[] keywords = title.split("\\s+");
-        HashSet<Integer> bookIds = new HashSet<>();
+        HashMap<Integer, Integer> booksIdNbOfKeywords = new HashMap<>();
         Arrays.asList(keywords).forEach(k -> {
-            bookIds.addAll(searchBookService.getBooksByTitle(k.toLowerCase()));
+            searchBookService.getBooksByTitle(k.toLowerCase()).forEach(id -> {
+                int nbOfKeywords = (booksIdNbOfKeywords.containsKey(id)) ? booksIdNbOfKeywords.get(id) + 1 : 1;
+                booksIdNbOfKeywords.put(id, nbOfKeywords);
+            });
         });
 
-        List<Book> books= searchBookService.getSortedBooks(bookIds,false);
+        List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
         return ResponseEntity.ok(books);
     }
 
@@ -108,13 +112,15 @@ public class SearchBookController {
     public ResponseEntity<List<Book>> searchBookByAuthor(@PathVariable String author)  {
 
         String[] keywords = author.split("\\s+");
-        HashSet<Integer> bookIds = new HashSet<>();
+        HashMap<Integer, Integer> booksIdNbOfKeywords = new HashMap<>();
         Arrays.asList(keywords).forEach(k -> {
-            bookIds.addAll(searchBookService.getBooksByAuthor(k.toLowerCase()));
+            searchBookService.getBooksByAuthor(k.toLowerCase()).forEach(id -> {
+                int nbOfKeywords = (booksIdNbOfKeywords.containsKey(id)) ? booksIdNbOfKeywords.get(id) + 1 : 1;
+                booksIdNbOfKeywords.put(id, nbOfKeywords);
+            });
         });
-        List<Book> books= searchBookService.getSortedBooks(bookIds,false);
+        List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
         return ResponseEntity.ok(books);
-
     }
 
     @GetMapping("/gettopbooks/")
