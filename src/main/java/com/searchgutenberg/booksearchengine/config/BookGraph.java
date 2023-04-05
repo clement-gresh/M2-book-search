@@ -27,6 +27,11 @@ public class BookGraph {
         }
     }
 
+    public void addLine(Integer book, Map<Integer, Float> jaccardDistance, Float closeness){
+        adjacencyMatrix.put(book, jaccardDistance);
+        closenessCentrality.put(book, closeness);
+    }
+
     public static float  computeDistance(List<KeyWord> keyWordList,
                                         ConcurrentHashMap<String, ConcurrentHashMap<Integer,Integer>> keywordsDictionary,
                                           Integer book){

@@ -60,6 +60,7 @@ public class DownloadBooks {
             List<IndexTitleData> TitleIndex=indexTitleDataRepository.findAll();
             List<IndexAuthorData> AuthorIndex=indexAuthorDataRepository.findAll();
             List<Term2Keyword> term2KeywordList= term2keywordRepository.findAll();
+            List<BookGraphData> bookGraphList= bookGraphRepository.findAll();
             keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
             booksTitle=new ConcurrentHashMap<String, Integer>();
             authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
@@ -76,10 +77,9 @@ public class DownloadBooks {
             for(Term2Keyword line:term2KeywordList){
                 term2KeywordDictionary.put(line.getTerm(),line.getKeyword());
             }
-
-
-
-
+            for(BookGraphData line: bookGraphList){
+                bookGraph.addLine(line.getBookId(), line.getJaccardDistance(), line.getClosenessCentrality());
+            }
             return library;
         }
 
