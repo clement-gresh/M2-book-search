@@ -63,6 +63,30 @@ public class BookGraph {
                 Map.Entry.comparingByValue()
         );
         sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
+//        List<Integer> booksIds = new ArrayList<>();
+//        sortedEntries.forEach(e -> booksIds.add(e.getKey()));
+//        return booksIds;
         return sortedEntries;
+    }
+
+    public SortedSet<Map.Entry<Integer, Float>> closestFromBooks(List<Integer> booksIds) {
+        Map<Integer, Float> meanDistances = new HashMap<>();
+
+        SortedSet<Map.Entry<Integer, Float>> sortedEntries = booksSortedByDistance(booksIds.get(0));
+
+        sortedEntries.forEach(e -> {
+            float sumDistance = 0;
+            for (Integer bookId : booksIds) {
+                sumDistance += adjacencyMatrix.get(bookId).get(e.getKey());
+            }
+            float meanDistance = sumDistance / booksIds.size();
+            meanDistances.put(e.getKey(), meanDistance);
+        });
+
+        SortedSet<Map.Entry<Integer, Float>> sortedDistances = new TreeSet<>(
+                Map.Entry.comparingByValue()
+        );
+        sortedDistances.addAll(meanDistances.entrySet());
+        return sortedDistances;
     }
 }

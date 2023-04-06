@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.bookGraph;
 
@@ -141,9 +142,25 @@ public class SearchBookController {
         List<Book> books = new ArrayList<>();
         SortedSet<Map.Entry<Integer, Float>> sortedEntries = bookGraph.booksSortedByDistance(Integer.valueOf(id));
         sortedEntries.forEach(e -> books.add(searchBookService.getBookById(e.getKey())));
-        for(Book book:books){
-            System.out.println("distance: " + bookGraph.getAdjacencyMatrix().get(1513).get(book.getId()));
-        }
+//        for(Book book:books){   // DEBUG
+//            System.out.println("distance: " + bookGraph.getAdjacencyMatrix().get(1513).get(book.getId()));
+//        }
+        return ResponseEntity.ok(books);
+    }
+
+
+    @GetMapping("/suggestionsfromresults/{idList}")
+    @ResponseBody
+    public ResponseEntity<List<Book>> getSuggestionsFromResults(@PathVariable String idList)  {
+        List<Book> books = new ArrayList<>();
+        List<String> idsString = Arrays.asList(idList.split("\\s+"));
+        List<Integer> idsInt = idsString.stream().map(Integer::parseInt).collect(Collectors.toList());
+        SortedSet<Map.Entry<Integer, Float>> closestFromBooks = bookGraph.closestFromBooks(idsInt);
+
+        closestFromBooks.forEach(e -> books.add(searchBookService.getBookById(e.getKey())));
+//        for(Book book:books){   // DEBUG
+//            System.out.println("distance: " + bookGraph.getAdjacencyMatrix().get(1513).get(book.getId()));
+//        }
         return ResponseEntity.ok(books);
     }
 }
