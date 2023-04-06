@@ -122,37 +122,6 @@ public class SearchBookService {
 //        sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
     }
 
-    public List<Book> getSortedBooks(HashMap<Integer, Integer>bookIdsKeyFrequence, Boolean closenessFlag) {
-       List<Book> books=new ArrayList<>();
-        if(! closenessFlag){
-            bookIdsKeyFrequence=bookIdsKeyFrequence.entrySet().stream()
-                    .sorted((e1, e2) -> - (e1.getValue().compareTo(e2.getValue())))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-            for(Integer bookId:bookIdsKeyFrequence.keySet()){
-                Book book=bookRepository.findBookById(bookId);
-                if(book!=null){
-                    books.add(book);
-                }
-
-            }
-        }
-       return  books;
-    }
-
-    public List<Book> getSortedBooks(HashSet<Integer>bookIds, Boolean closenessFlag) {
-        List<Book> books=new ArrayList<>();
-        if(! closenessFlag){
-            for(Integer bookId:bookIds){
-                Book book=bookRepository.findBookById(bookId);
-                if(book!=null){
-                    books.add(book);
-                }
-
-            }
-        }
-        return  books;
-    }
-
     public List<Book> getTop20Books(){
         List<Book> books=new ArrayList<>();
         books=bookRepository.findAll();
