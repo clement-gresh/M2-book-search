@@ -58,7 +58,7 @@ public class BookGraph {
         });
     }
 
-    SortedSet<Map.Entry<Integer, Float>> booksSortedByDistance(Integer bookId) {
+    public SortedSet<Map.Entry<Integer, Float>> booksSortedByDistance(Integer bookId) {
         SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
                 Map.Entry.comparingByValue()
         );

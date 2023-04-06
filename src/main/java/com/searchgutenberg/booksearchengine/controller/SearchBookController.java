@@ -8,10 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.searchgutenberg.booksearchengine.BooksearchengineApplication.bookGraph;
 
 @CrossOrigin
 @RestController
@@ -126,6 +125,7 @@ public class SearchBookController {
         List<Book> books= searchBookService.getTop20Books();
         return ResponseEntity.ok(books);
     }
+
     @GetMapping("/getbook/{id}")
     @ResponseBody
     public ResponseEntity<Book> searchBookById(@PathVariable String id)  {
@@ -135,10 +135,15 @@ public class SearchBookController {
 
     }
 
-
-
-
-
-
-
+    @GetMapping("/suggestions/{id}")
+    @ResponseBody
+    public ResponseEntity<List<Book>> getSuggestions(@PathVariable String id)  {
+        List<Book> books = new ArrayList<>();
+        SortedSet<Map.Entry<Integer, Float>> sortedEntries = bookGraph.booksSortedByDistance(Integer.valueOf(id));
+        sortedEntries.forEach(e -> books.add(searchBookService.getBookById(e.getKey())));
+        for(Book book:books){
+            System.out.println("distance: " + bookGraph.getAdjacencyMatrix().get(1513).get(book.getId()));
+        }
+        return ResponseEntity.ok(books);
+    }
 }
