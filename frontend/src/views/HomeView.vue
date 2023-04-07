@@ -47,7 +47,6 @@
       axios.get('http://localhost:8080/gettopbooks/')
         .then(response => {
           books.value = response.data;
-          //console.log("response:" + books.value[0].title);
         })
         .catch(error => {
           console.log(error);
@@ -127,5 +126,5 @@
   width: 100%;
   display: block;
 }
-  </style>
+</style>
   

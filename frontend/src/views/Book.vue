@@ -1,4 +1,3 @@
-
 <template>
   <TopMenu />
   <el-container style="margin: 2%;">
@@ -74,7 +73,6 @@ import { ref, onMounted, defineComponent,watch,reactive,inject,toRefs } from 'vu
 import axios from 'axios';
 import TopMenu from '../components/IndexView.vue'
 import { useRoute,useRouter } from 'vue-router';
-import { resolvePackageData } from 'vite';
 
 interface Book {
   id:number;
@@ -84,11 +82,9 @@ interface Book {
 
 export default defineComponent({
   setup() {
-    //const reload = inject('reload'); // 注入函数
     const route = useRoute();
     const router = useRouter();
     const routeQuery = reactive(route.query);
-    //const bookSearch = toRefs(routeQuery).bookSearch;
     const bookSearch = ref(routeQuery.bookSearch);
     const radioSelect = ref(routeQuery.radioSelect);
     const formatSelect = ref(routeQuery.formatSelect);
@@ -107,14 +103,10 @@ export default defineComponent({
         console.log("je sais radioSelect="+radioSelect.value);
         console.log("je sais formatSelect="+formatSelect.value);
         if(String(radioSelect.value) === "1"){
-
           if(String(formatSelect.value) === "2"){
             console.log("refBookSearch="+bookSearch.value);
-            //const response = await axios.get(`http://localhost:8080/searchbyregex?regex=`+JSON.stringify(bookSearch));
-            
             const response = await axios({
               method: 'post',
-              //url: 'http://localhost:8080/searchbyregex?regex='+JSON.stringify(bookSearch),
               url: 'http://localhost:8080/searchbyregex/',
               headers: {
                 'Content-Type': 'application/json'
@@ -124,43 +116,29 @@ export default defineComponent({
               }
             });
             books.value = response.data;
-            
-            //console.log("book.values regex = " + books.value);
           }else{
             const response = await axios.get(`http://localhost:8080/searchbycontent/${bookSearch.value}`);
             books.value = response.data;
-            //console.log("book.values = "+books.value);
           }
           
         }else if(String(radioSelect.value) === "2"){
           const response = await axios.get(`http://localhost:8080/searchbyauthor/${bookSearch.value}`);
           books.value = response.data;
-          //console.log("im in else if radio2, radioSelect="+radioSelect);
         }else{
           const response = await axios.get(`http://localhost:8080/searchbytitle/${bookSearch.value}`);
           books.value = response.data;
-          //console.log("im in else if radio3, radioSelect="+radioSelect);  
         }
         console.log("In page book now")
-        
       } catch (error) {
         console.error(error);
-        // 显示错误消息
-        alert('An error occurred while loading search results.');
       }
-
 
       bookIds.value = books.value.map(book => book.id).join(' ');
       const responseRB = await axios.get(`http://localhost:8080/suggestionsfromresults/${bookIds.value}`);
       relatedBooks.value = responseRB.data;
-      //Object.assign(book, response.data);
-      //console.log("im in content page, book.value="+book.authors);
-      //console.log("getBooks! bookeSearch="+bookSearch+"")
     };
     onMounted(() => {
-
       getBooks();
-      
     });
 
     watch(() => route.query, (newVal) => {

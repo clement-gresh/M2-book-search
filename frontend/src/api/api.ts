@@ -1,28 +1,28 @@
 import { request } from './axios'
 
 /**
- * @description -封装User类型的接口方法
+ * @description 
  */
-export class UserService {       // 模块一
+export class UserService {      
     /**
-     * @description 用户登录
-     * @param {string} username - 用户名
-     * @return {HttpResponse} result
+     * @description
+     * @param {string} username 
+     * @return {HttpResponse} 
      */
-    static async login1(params) {   // 接口一
+    static async login1(params) {   
         return request('/login',params, 'post')
     }
-    static async login2(params) {   // 接口二
+    static async login2(params) {   
         return request('/login',params, 'post')
     }
-    static async login3(params) {   // 接口三
+    static async login3(params) {   
         return request('/login',params, 'post')
     }
 }
 
-export class landRelevant {     // 模块二
+export class landRelevant {     
     /**
-     * @description 获取地列表
+     * @description 
      * @return {HttpResponse} result
      */
     static async landList(params) {

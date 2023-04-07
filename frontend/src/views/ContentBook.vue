@@ -18,7 +18,6 @@
             </el-col>
             <el-col :span="4">
                 <img :src="book.image">
-               
             </el-col>
             <el-col :span="4">
                 <div v-for="author in book.authors" >
@@ -57,17 +56,14 @@
         </el-row>
     </div>
 </el-container>
-
-
 </template>
 
 
 <script lang="ts">
-import { ref, onMounted, defineComponent,watch,reactive,inject,toRefs } from 'vue';
+import { ref, onMounted, defineComponent,reactive } from 'vue';
 import axios from 'axios';
 import TopMenu from '../components/IndexView.vue'
 import { useRoute,useRouter } from 'vue-router';
-import { resolvePackageData } from 'vite';
 
 interface Author {
   name: string;
@@ -80,7 +76,6 @@ interface Book {
   title: string;
   image: string;
   text:string;
-  //authors: {name: string,birth_year: string,death_year:string}[]
   authors: Author[];
 }
 
@@ -102,9 +97,6 @@ export default defineComponent({
             router.back();
         }
         const relatedBooks = ref([] as Book[]);
-        //const relatedBooks = ref<Book[]>([]);
-        //const book = ref<Book>({ id: 0, title: '', image: '', text: '', authors: [] });
-        //value.authors[0].name
         console.log("skip to Content!");
         const goContent = (id) => {
             router.push({
@@ -121,9 +113,7 @@ export default defineComponent({
 
             const responseRB = await axios.get(`http://localhost:8080/suggestions/${idBook.value}`);
             relatedBooks.value = responseRB.data;
-            //Object.assign(book, response.data);
             console.log("im in content page, book.value="+book.authors);
-
         });
         return {
             book,
@@ -140,4 +130,3 @@ export default defineComponent({
 
 })
 </script>
-
