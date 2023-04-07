@@ -1,32 +1,69 @@
 
-
-
-
 <template>
   <TopMenu />
-  <h1>Search Results for "{{ bookSearch }}"</h1>
-  <el-container>
+  <el-container style="margin: 2%;">
     <div >
+      <el-row >
+        <el-col :span="2">
+        </el-col>
+        <el-col :span="16">
+            <el-button type="primary" plain @click="goBack">Back</el-button>
+        </el-col>
+        <el-col :span="6">
+        </el-col>
+      </el-row>
+      <el-row >
+        <el-col :span="8">
+        </el-col>
+        <el-col :span="8">
+            <h2>Search Resultats: {{ bookSearch }}</h2>
+        </el-col>
+        <el-col :span="8">
+        </el-col>
+      </el-row>
+      <el-row >
+        <el-col
+        v-for="(item, index) in books"
+        :key="item.id"
+        :span="3"
+        :offset="index % 6 === 0 ? 0 : 1"
+        >
+          <el-card  style="height: 100%; width: auto;">
+            <img
+                :src="item.image"
+                class="image"
+            />
+            <div>
+              <div class="bottom">
+                <el-button style="width: 50%;" type="primary" plain class="button" @click="goContent(item.id)">More</el-button>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
       <el-row>
-      <el-col
-      v-for="(item, index) in books"
-      :key="item.id"
-      :span="7"
-      :offset="index % 5 === 0 ? 0 : 1"
-      >
-          <el-card body-style="{  }" style="height: 100%; width: auto;">
+            <h3 style="margin-top: 5%;">Related Books</h3>
+      </el-row>
+      <el-row>
+        <el-col
+        v-for="(item, index) in relatedBooks"
+        :key="item.id"
+        :span="3"
+        :offset="index % 6 === 0 ? 0 : 1"
+        >
+          <el-card  style="height: 100%; width: auto;">
           <img
               :src="item.image"
               class="image"
           />
           <div style="padding: auto">
-            <span><router-link :to="{ name: 'post', params: { id: item.id } }">{{ item.title }}</router-link></span>
+              <span>{{ item.title }}</span>
               <div class="bottom">
-              <el-button text class="button">Operating</el-button>
+              <el-button style="width: 50%;" type="primary" plain class="button" @click="goContent(item.id)">More</el-button>
               </div>
           </div>
           </el-card>
-      </el-col>
+        </el-col>           
       </el-row>
     </div>
   </el-container>
@@ -36,7 +73,7 @@
 import { ref, onMounted, defineComponent,watch,reactive,inject,toRefs } from 'vue';
 import axios from 'axios';
 import TopMenu from '../components/IndexView.vue'
-import { useRoute } from 'vue-router';
+import { useRoute,useRouter } from 'vue-router';
 import { resolvePackageData } from 'vite';
 
 interface Book {
@@ -49,13 +86,19 @@ export default defineComponent({
   setup() {
     //const reload = inject('reload'); // 注入函数
     const route = useRoute();
+    const router = useRouter();
     const routeQuery = reactive(route.query);
     //const bookSearch = toRefs(routeQuery).bookSearch;
     const bookSearch = ref(routeQuery.bookSearch);
     const radioSelect = ref(routeQuery.radioSelect);
     const formatSelect = ref(routeQuery.formatSelect);
     const books = ref<Book[]>([]);
+    const relatedBooks = ref([] as Book[]);
+    const bookIds = ref();
     
+    function goBack() {
+            router.back();
+    }
     
     const getBooks = async () => {
       
@@ -81,6 +124,7 @@ export default defineComponent({
               }
             });
             books.value = response.data;
+            
             //console.log("book.values regex = " + books.value);
           }else{
             const response = await axios.get(`http://localhost:8080/searchbycontent/${bookSearch.value}`);
@@ -105,9 +149,14 @@ export default defineComponent({
         alert('An error occurred while loading search results.');
       }
 
-      console.log("getBooks! bookeSearch="+bookSearch+"")
+
+      bookIds.value = books.value.map(book => book.id).join(' ');
+      const responseRB = await axios.get(`http://localhost:8080/suggestionsfromresults/${bookIds.value}`);
+      relatedBooks.value = responseRB.data;
+      //Object.assign(book, response.data);
+      //console.log("im in content page, book.value="+book.authors);
+      //console.log("getBooks! bookeSearch="+bookSearch+"")
     };
-    
     onMounted(() => {
 
       getBooks();
@@ -125,16 +174,23 @@ export default defineComponent({
 
     
     
-    const goBack = () => {
-      history.back();
+    const goContent = (id) => {
+      router.push({
+        name: 'content',
+        query: {
+          id:id
+        },
+      });
     };
     
     return {
       books,
-      goBack,
+      goContent,
       bookSearch,
       formatSelect,
-      radioSelect
+      radioSelect,
+      relatedBooks,
+      goBack
     }
   },
   name: 'Book',

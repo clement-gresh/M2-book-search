@@ -18,18 +18,19 @@
       :placeholder="bookSearchPlaceholder"
       :suffix-icon="Search"
       style="width:30vh;height: 5vh;margin-left: 5vh;margin-top: 1vh;"
+      @keyup.enter="handleIconClick"
     />
     <el-button @click="handleIconClick" style="margin-top: 1.3vh; margin-left: 2vh;">Search</el-button>
     <div class="selectType">
-      <el-radio-group v-model="radioSelect" class="ml-4" style="margin-left: 1vh; margin-top:1.5vh;">
-        <el-radio label="1" size="small">Content</el-radio>
-        <el-radio label="2" size="small">Author</el-radio>
-        <el-radio label="3" size="small">Title</el-radio>
+      <el-radio-group v-model="state.radioSelect" class="ml-4" style="margin-left: 1vh; margin-top:1.5vh;">
+        <el-radio :label="1" size="small">Content</el-radio>
+        <el-radio :label="2" size="small">Author</el-radio>
+        <el-radio :label="3" size="small">Title</el-radio>
       </el-radio-group>
 
-      <el-radio-group v-model="formatSelect" class="ml-4" style="margin-left: 3vh; margin-top: 1.5vh;">
-        <el-radio label="1" size="small">Search</el-radio>
-        <el-radio label="2" size="small">Advance Search</el-radio>
+      <el-radio-group v-model="state.formatSelect" class="ml-4" style="margin-left: 3vh; margin-top: 1.5vh;">
+        <el-radio :label="1" size="small" :disabled="state.radio2Disabled[0]">Search</el-radio>
+        <el-radio :label="2" size="small" :disabled="state.radio2Disabled[1]">Advance Search</el-radio>
       </el-radio-group>
     </div>
       </el-menu>
@@ -38,7 +39,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watchEffect,watch} from 'vue'
+import { defineComponent, ref, watchEffect,watch, reactive} from 'vue'
 import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import axios from 'axios';
@@ -54,9 +55,27 @@ export default defineComponent({
     const router = useRouter()
     const books = ref([] as Book[]);
     const bookSearch = ref('');
-    const bookSearchPlaceholder = ref('Input');
+    const bookSearchPlaceholder = ref('Keyword for books');
     const radioSelect = ref('1')
     const formatSelect = ref('1')
+
+    const state = reactive({
+      radioSelect: 1,
+      formatSelect: 1,
+      radio2Disabled: [false, false, false],
+      radio1To2Map: {
+        2: [1, 2], // 选项 2 选中后，禁用选项 1 和 3
+        3: [1,2], // 选项 3 选中后，禁用选项 2
+      },
+    });
+
+    watch(() => state.radioSelect, (value) => {
+      const disabledOptions = state.radio1To2Map[value] || [];
+      state.radio2Disabled = state.radio2Disabled.map((_, index) => {
+        return disabledOptions.includes(index + 1);
+      });
+    });
+
 
     const handleSelect = (key: string, keyPath: string[]) => {
       console.log(key, keyPath)
@@ -80,8 +99,8 @@ export default defineComponent({
         name: 'book',
         query: {
           bookSearch: bookSearch.value,
-          radioSelect: radioSelect.value,
-          formatSelect: formatSelect.value
+          radioSelect: state.radioSelect,
+          formatSelect: state.formatSelect
         },
       });
       //console.log("In page indexview, i get"+bookSearch.value+", "+radioSelect.value)
@@ -108,16 +127,17 @@ export default defineComponent({
       Search,
       bookSearchPlaceholder,
       goHome,
-      radioSelect,
-      formatSelect
+      //radioSelect,
+      //formatSelect,
+      state
     }
   },
   mounted() {
-    /*
+    
     if (this.$route.query.bookSearch) {
       this.bookSearch = this.$route.query.bookSearch;
       this.bookSearchPlaceholder = this.$route.query.bookSearch;
-    }*/
+    }
   },
 
   

@@ -15,13 +15,13 @@ const router = createRouter({
     },
     {
       path: '/book',
-        name: 'book',
-        component: BookView,
-        children:[{
-          path: 'content',
-          name: 'content',
-          component: ContentView
-        }]
+      name: 'book',
+      component: BookView,
+    },
+    {
+      path: '/content',
+      name: 'content',
+      component: ContentView
     }
   ]
 })

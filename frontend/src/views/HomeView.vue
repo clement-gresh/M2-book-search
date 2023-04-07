@@ -1,22 +1,22 @@
 <template>
     <TopMenu />
-    <el-container style="margin: 10%;">
+    <el-container style="margin: 4%;">
         <el-row>
         <el-col
         v-for="(item, index) in books"
         :key="item.id"
-        :span="4"
-        :offset="index % 5 === 0 ? 0 : 1"
+        :span="3"
+        :offset="index % 6 === 0 ? 0 : 1"
         >
-            <el-card body-style="{  }" style="height: 100%; width: auto;">
+            <el-card  style="height: 100%; width: auto;">
             <img
                 :src="item.image"
                 class="image"
             />
             <div style="padding: auto">
-                <span>{{ item.title }}</span>
+                <p>{{ item.title }}</p>
                 <div class="bottom">
-                <el-button text class="button">More</el-button>
+                <el-button style="width: 50%;" type="primary" plain class="button" @click="goContent(item.id)">More</el-button>
                 </div>
             </div>
             </el-card>
@@ -32,7 +32,7 @@
   import TopMenu from '../components/IndexView.vue'
 
   interface Book {
-    id:number;
+    id:number|string;
     title: string;
     image: string;
   }
@@ -56,12 +56,22 @@
       watchEffect(() => {
         console.log('books changed', books.value);
       });
+
+      const goContent = (id:number|string) => {
+        router.push({
+            name: 'content',
+            query: {
+            id:id
+            },
+        });
+        };
   
       return {
         inputValue,
         activeIndex,
         router,
-        books
+        books,
+        goContent
       }
     },
 
