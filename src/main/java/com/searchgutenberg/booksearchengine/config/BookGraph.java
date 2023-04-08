@@ -53,8 +53,9 @@ public class BookGraph {
     public void computeCloseness(){
         int size = adjacencyMatrix.size();
         adjacencyMatrix.forEach((key, value) -> {
-            double sum = value.values().stream().mapToDouble(e -> Double.parseDouble(String.valueOf(e))).sum();
-            closenessCentrality.put(key, (float) ((size - 1) / sum));
+            float sum = 0F;
+            for(float d : value.values()) { sum += d; }
+            closenessCentrality.put(key, (size - 1) / sum);
         });
     }
 
