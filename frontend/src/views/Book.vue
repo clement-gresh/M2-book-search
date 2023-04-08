@@ -20,7 +20,7 @@
         <el-col :span="8">
         </el-col>
       </el-row>
-      <el-row >
+      <el-row v-if="books && books.length > 0">
         <el-col
         v-for="(item, index) in books"
         :key="item.id"
@@ -40,10 +40,11 @@
           </el-card>
         </el-col>
       </el-row>
+      <el-row v-else> <h1> Sorry, we found nothing :(</h1></el-row>
       <el-row>
             <h3 style="margin-top: 5%;">Related Books</h3>
       </el-row>
-      <el-row>
+      <el-row v-if="books && books.length > 0">
         <el-col
         v-for="(item, index) in relatedBooks"
         :key="item.id"
@@ -115,18 +116,19 @@ export default defineComponent({
                 regex: bookSearch.value
               }
             });
-            books.value = response.data;
+            books.value = response.data.splice(0, 10);
           }else{
             const response = await axios.get(`http://localhost:8080/searchbycontent/${bookSearch.value}`);
-            books.value = response.data;
+            books.value = response.data.splice(0, 10);            
+            console.log("books resultat:"+books.value)
           }
           
         }else if(String(radioSelect.value) === "2"){
           const response = await axios.get(`http://localhost:8080/searchbyauthor/${bookSearch.value}`);
-          books.value = response.data;
+          books.value = response.data.splice(0, 10);
         }else{
           const response = await axios.get(`http://localhost:8080/searchbytitle/${bookSearch.value}`);
-          books.value = response.data;
+          books.value = response.data.splice(0, 10);
         }
         console.log("In page book now")
       } catch (error) {
@@ -139,8 +141,7 @@ export default defineComponent({
         bookIds.value = firstThreeBooks.map(book => book.id).join(' ');
       }
       const responseRB = await axios.get(`http://localhost:8080/suggestionsfromresults/${bookIds.value}`);
-      relatedBooks.value = responseRB.data;
-
+      relatedBooks.value = responseRB.data.splice(0, 10);
     };
     
     onMounted(() => {

@@ -112,7 +112,7 @@ export default defineComponent({
             console.log("im in content page, book.value="+book.authors);
 
             const responseRB = await axios.get(`http://localhost:8080/suggestions/${idBook.value}`);
-            relatedBooks.value = responseRB.data;
+            relatedBooks.value = responseRB.data.splice(0, 10);
             console.log("im in content page, book.value="+book.authors);
         });
         return {
