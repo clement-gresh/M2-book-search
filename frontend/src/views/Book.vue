@@ -133,10 +133,16 @@ export default defineComponent({
         console.error(error);
       }
 
-      bookIds.value = books.value.map(book => book.id).join(' ');
+
+      if (books.value.length > 0) {
+        const firstThreeBooks = books.value.slice(0, 3);
+        bookIds.value = firstThreeBooks.map(book => book.id).join(' ');
+      }
       const responseRB = await axios.get(`http://localhost:8080/suggestionsfromresults/${bookIds.value}`);
       relatedBooks.value = responseRB.data;
+
     };
+    
     onMounted(() => {
       getBooks();
     });
