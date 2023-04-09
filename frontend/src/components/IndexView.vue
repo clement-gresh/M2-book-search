@@ -13,7 +13,7 @@
       size="large"
       :placeholder="bookSearchPlaceholder"
       :suffix-icon="Search"
-      style="width:30vh;height: 5vh;margin-left: 5vh;margin-top: 1vh;"
+      style="width:35vh;height: 5vh;margin-left: 1vh;margin-top: 1vh;"
       @keyup.enter="handleIconClick"
       :allow-spaces="true"
     />
@@ -50,7 +50,7 @@ export default defineComponent({
     const router = useRouter()
     const books = ref([] as Book[]);
     const bookSearch = ref('');
-    const bookSearchPlaceholder = ref('Keyword for books');
+    const bookSearchPlaceholder = ref('ex: year-parent-govern for multiple words');
 
 
     const state = reactive({
