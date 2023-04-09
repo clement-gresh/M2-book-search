@@ -61,7 +61,7 @@ public class DownloadBooks {
         // if the books already stocked in the database, get them
         List<Book>library=bookRepository.findAll();
 
-        if(library.size()>=60 ){
+        if(library.size()>=1664 ){
 
             List<IndexTableData> indexTable= indexTableDataRepository.findAll();
             List<IndexTitleData> TitleIndex=indexTitleDataRepository.findAll();
@@ -94,7 +94,7 @@ public class DownloadBooks {
         ResponseEntity<GutendexEntity> result = httpRequest.exchange("http://gutendex.com/books?mime_type=text&languages=en", HttpMethod.GET, httpEntity, GutendexEntity.class);
         ArrayList<Book> gotBooks;
 
-        while (library.size() < 60){
+        while (library.size() < 1664){
             List<CompletableFuture<Boolean>> futures = new ArrayList<>();
             gotBooks = Objects.requireNonNull(result.getBody()).getResults();
             gotBooks = gotBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
