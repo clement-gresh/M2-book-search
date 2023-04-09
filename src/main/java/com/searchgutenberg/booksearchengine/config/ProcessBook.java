@@ -40,54 +40,59 @@ public class ProcessBook {
      */
     @Async("ProcessBookExecutor")
     public CompletableFuture<Boolean> processBook(Book book) throws IOException {
+        try {
+            Format format = book.getFormats();
+            String textURL = getTextURL(format);
+            if (textURL == null)
+                return CompletableFuture.completedFuture(false);
+            book.setText(textURL);
+            if (format.getImage() != null){
+                book.setImage(format.getImage().replace("small", "medium"));
+            }
 
-        Format format = book.getFormats();
-        String textURL = getTextURL(format);
-        if (textURL == null)
-            return CompletableFuture.completedFuture(false);
-        book.setText(textURL);
-        if (format.getImage() != null){
-            book.setImage(format.getImage().replace("small", "medium"));
-        }
+            String text = restTemplate.getForObject(textURL, String.class);
 
-        String text = restTemplate.getForObject(textURL, String.class);
-        if (text == null)
-            return CompletableFuture.completedFuture(false);
-        
-        List<KeyWord> keyWordList = KeyWordExtractor.getBookKeyWords(text);
+            if (text == null)
+                return CompletableFuture.completedFuture(false);
 
-        // Creating Jaccard Graph
-        ConcurrentHashMap<Integer, Float> jaccardDistance = new ConcurrentHashMap<>();
-        jaccardDistance.put(book.getId(), 1F);
-        bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
-            float distance = BookGraph.computeDistance(keyWordList, keywordsDictionary, key);
-            jaccardDistance.put(key, distance);
-        });
-        bookGraph.addBook(book.getId(), jaccardDistance);
+            List<KeyWord> keyWordList = KeyWordExtractor.getBookKeyWords(text);
+
+            for (KeyWord kword : keyWordList) {
+                ConcurrentHashMap<Integer, Integer> bookIdsKeyFrequence = keywordsDictionary.get(kword.getRoot());
+                for (String word : kword.getWords()) {
+                    term2KeywordDictionary.put(word, kword.getRoot());
+                }
+
+
+                if (bookIdsKeyFrequence != null) {
+                    bookIdsKeyFrequence.put(book.getId(), kword.getFrequence());
+                } else {
+                    bookIdsKeyFrequence = new ConcurrentHashMap<>();
+                    bookIdsKeyFrequence.put(book.getId(), kword.getFrequence());
+                    keywordsDictionary.put(kword.getRoot(), bookIdsKeyFrequence);
+                }
+            }
+            indexTitleAuthor(book);
+            bookRepository.save(book);
+
+            // Creating Jaccard Graph
+            ConcurrentHashMap<Integer, Float> jaccardDistance = new ConcurrentHashMap<>();
+            jaccardDistance.put(book.getId(), 1F);
+            bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
+                float distance = BookGraph.computeDistance(keyWordList, keywordsDictionary, key);
+                jaccardDistance.put(key, distance);
+            });
+            bookGraph.addBook(book.getId(), jaccardDistance);
 //        System.out.println(
 //                "New book id: " + book.getId()
 //                + " (id: " + 1513 + ", " + bookGraph.getAdjacencyMatrix().get(book.getId()).get(1513) + ")"
 //        );
 
-        for (KeyWord kword : keyWordList) {
-            ConcurrentHashMap<Integer,Integer> bookIdsKeyFrequence = keywordsDictionary.get(kword.getRoot());
-            for(String word :kword.getWords()){
-                term2KeywordDictionary.put(word,kword.getRoot());
-            }
-
-
-            if (bookIdsKeyFrequence != null) {
-                bookIdsKeyFrequence.put(book.getId(),kword.getFrequence());
-            } else {
-                bookIdsKeyFrequence = new ConcurrentHashMap<>();
-                bookIdsKeyFrequence.put(book.getId(),kword.getFrequence());
-                keywordsDictionary.put(kword.getRoot(), bookIdsKeyFrequence);
-            }
+            return CompletableFuture.completedFuture(true);
         }
-        indexTitleAuthor(book);
-        bookRepository.save(book);
-
-        return CompletableFuture.completedFuture(true);
+        catch (Exception e) {
+            return CompletableFuture.completedFuture(false);
+        }
     }
 
     /**

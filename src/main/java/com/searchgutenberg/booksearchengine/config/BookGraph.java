@@ -20,15 +20,19 @@ public class BookGraph {
 
     // jaccardDistance must have an entry with the newbook itself at 1
     public void addBook(Integer newBook, ConcurrentHashMap<Integer, Float> jaccardDistance){
-
-       if (!adjacencyMatrix.isEmpty()) {
-           for (ConcurrentHashMap.Entry<Integer, ConcurrentHashMap<Integer, Float>> entry : adjacencyMatrix.entrySet()) {
-               if(entry.getValue() != null) {
-                   entry.getValue().putIfAbsent(newBook, jaccardDistance.get(entry.getKey()));
+       synchronized (adjacencyMatrix) {
+           if (!adjacencyMatrix.isEmpty()) {
+               for (ConcurrentHashMap.Entry<Integer, ConcurrentHashMap<Integer, Float>> entry : adjacencyMatrix.entrySet()) {
+                   if(jaccardDistance.get(entry.getKey()) != null) {
+                       entry.getValue().putIfAbsent(newBook, jaccardDistance.get(entry.getKey()));
+                   } else {
+                       //System.out.println("jaccard distance is null: " + newBook); // debug
+                       entry.getValue().putIfAbsent(newBook, 1F);
+                   }
                }
            }
+           adjacencyMatrix.putIfAbsent(newBook, jaccardDistance);
        }
-       adjacencyMatrix.putIfAbsent(newBook, jaccardDistance);
     }
     public void removeBook(Integer bookId){
         adjacencyMatrix.remove(bookId);
@@ -57,7 +61,7 @@ public class BookGraph {
 
         int union = keyWordList.size() + bookKeywordNb.get() - intersection;
 
-        return 1 - (float) intersection/union;
+        return (union != 0) ? 1 - (float) intersection/union : 1;
     }
 
     public void computeCloseness(){
