@@ -57,7 +57,7 @@ public class ProcessBook {
         List<KeyWord> keyWordList = KeyWordExtractor.getBookKeyWords(text);
 
         // Creating Jaccard Graph
-        HashMap<Integer, Float> jaccardDistance = new HashMap<>();
+        ConcurrentHashMap<Integer, Float> jaccardDistance = new ConcurrentHashMap<>();
         jaccardDistance.put(book.getId(), 1F);
         bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
             float distance = BookGraph.computeDistance(keyWordList, keywordsDictionary, key);
