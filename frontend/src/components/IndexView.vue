@@ -15,6 +15,7 @@
       :suffix-icon="Search"
       style="width:30vh;height: 5vh;margin-left: 5vh;margin-top: 1vh;"
       @keyup.enter="handleIconClick"
+      :allow-spaces="true"
     />
     <el-button @click="handleIconClick" style="margin-top: 1.3vh; margin-left: 2vh;">Search</el-button>
     <div class="selectType">
@@ -82,7 +83,7 @@ export default defineComponent({
       router.push({
         name: 'book',
         query: {
-          bookSearch: bookSearch.value,
+          bookSearch: bookSearch.value.replace(/-/g, ' '),
           radioSelect: state.radioSelect,
           formatSelect: state.formatSelect
         },
