@@ -38,10 +38,10 @@ public class Tools {
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(8);
-        executor.setMaxPoolSize(32); // 线程池最大线程数
-        executor.setQueueCapacity(32); // 等待队列容量
+        executor.setMaxPoolSize(32);
+        executor.setQueueCapacity(32);
         executor.setKeepAliveSeconds(60);
-        executor.setThreadNamePrefix("processBookThread"); // 线程名前缀
+        executor.setThreadNamePrefix("processBookThread");
         executor.initialize();
         return executor;
     }

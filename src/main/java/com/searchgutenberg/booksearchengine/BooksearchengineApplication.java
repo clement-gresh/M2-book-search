@@ -17,7 +17,7 @@ public class BooksearchengineApplication {
 
     public static ConcurrentHashMap<String,String > term2KeywordDictionary;
 
-    public static BookGraph bookGraph = new BookGraph();
+    public static BookGraph bookGraph ;
 
 
 

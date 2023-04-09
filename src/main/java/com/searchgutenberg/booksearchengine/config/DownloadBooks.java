@@ -50,21 +50,25 @@ public class DownloadBooks {
 
     @Bean
     public List<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
-
+        keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
+        booksTitle=new ConcurrentHashMap<String, Integer>();
+        authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
+        term2KeywordDictionary=new ConcurrentHashMap<>();
+        bookGraph=new BookGraph();
         // if book already stocked in the data base, get them
         List<Book>library=bookRepository.findAll();
         //debug change the number of the while to get the number of the book you want
-        if(library.size()>=5 ){
+        if(library.size()>=70 ){
            // if(keywordsDictionary!=null){return library;}
             List<IndexTableData> indexTable= indexTableDataRepository.findAll();
             List<IndexTitleData> TitleIndex=indexTitleDataRepository.findAll();
             List<IndexAuthorData> AuthorIndex=indexAuthorDataRepository.findAll();
             List<Term2Keyword> term2KeywordList= term2keywordRepository.findAll();
             List<BookGraphData> bookGraphList= bookGraphRepository.findAll();
-            keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
-            booksTitle=new ConcurrentHashMap<String, Integer>();
-            authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
-            term2KeywordDictionary=new ConcurrentHashMap<>();
+//            keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
+//            booksTitle=new ConcurrentHashMap<String, Integer>();
+//            authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
+//            term2KeywordDictionary=new ConcurrentHashMap<>();
             for(IndexTableData line:indexTable){
                keywordsDictionary.put(line.getToken(),line.getBookIdsKeyFrequence());
             }
@@ -84,70 +88,73 @@ public class DownloadBooks {
         }
 
         // else, download the 1664 books information and stock them in DB
-        keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
-        booksTitle=new ConcurrentHashMap<String, Integer>();
-        authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
-        term2KeywordDictionary=new ConcurrentHashMap<>();
+//        keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
+//        booksTitle=new ConcurrentHashMap<String, Integer>();
+//        authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
+//        term2KeywordDictionary=new ConcurrentHashMap<>();
 
         log.info("First time use, Downloading 1664 books ...");
         ResponseEntity<GutendexEntity> result = httpRequest.exchange("http://gutendex.com/books?mime_type=text&languages=en", HttpMethod.GET, httpEntity, GutendexEntity.class);
-        ArrayList<Book> allBooks;
+        ArrayList<Book> gotBooks;
+
         //debug change the number of the while to get the number of the book you want
-        while (library.size() < 1){
-            allBooks = Objects.requireNonNull(result.getBody()).getResults();
-            allBooks = allBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
+        while (library.size() < 70){
             List<CompletableFuture<Boolean>> futures = new ArrayList<>();
-            for (Book book: allBooks){
+            gotBooks = Objects.requireNonNull(result.getBody()).getResults();
+            gotBooks = gotBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
+
+            for (Book book: gotBooks){
                 futures.add(processBooks.processBook(book));
             }
-
+            log.info("books size "+gotBooks.size()+" future size "+futures.size());
             for (int i=0;i<futures.size();i++){
                 CompletableFuture<Boolean> future=futures.get(i);
                 Boolean resultat=future.join();
                 if(resultat){
-                    library.add(allBooks.get(i));
-                    System.out.println("success load book "+allBooks.get(i).getId());
+                    library.add(gotBooks.get(i));
+                    System.out.println("success load book "+gotBooks.get(i).getId());
                 }
             }
-
-            // Saving Jaccard Graph in the DB
-            bookGraph.computeCloseness();;
-
-            bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
-                float closenessCentrality = bookGraph.getClosenessCentrality().get(key);
-                BookGraphData line = new BookGraphData(key, value, closenessCentrality);
-//                System.out.println(
-//                        "New book id: " + line.getBookId()
-//                                + " (id: " + 1513 + ", "
-//                                + line.getJaccardDistance().get(1513) + ")"
-//                );
-                bookGraphRepository.save(line);
-            });
-
-            log.info("progress: " + library.size());
-            keywordsDictionary.forEach((token,bookIdsKeyFrequence)->{
-                IndexTableData line=new IndexTableData(token,bookIdsKeyFrequence);
-                indexTableDataRepository.save(line);
-
-            });
-            booksTitle.forEach( (title,id)->{
-                IndexTitleData line=new IndexTitleData(title,id);
-                indexTitleDataRepository.save(line);
-            });
-            authorBooks.forEach( (author,booksId)->{
-                IndexAuthorData line=new IndexAuthorData(author,booksId);
-                indexAuthorDataRepository.save(line);
-            });
-
-            term2KeywordDictionary.forEach( (term,keyword)->{
-                Term2Keyword line=new Term2Keyword(term,keyword);
-                term2keywordRepository.save(line);
-            });
 
 
             String nextURL = result.getBody().getNext();
             result = httpRequest.exchange(nextURL, HttpMethod.GET, httpEntity, GutendexEntity.class);
         }
+
+       
+        // Saving Jaccard Graph in the DB
+        bookGraph.computeCloseness();;
+
+        bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
+            float closenessCentrality = bookGraph.getClosenessCentrality().get(key);
+            BookGraphData line = new BookGraphData(key, value, closenessCentrality);
+//                System.out.println(
+//                        "New book id: " + line.getBookId()
+//                                + " (id: " + 1513 + ", "
+//                                + line.getJaccardDistance().get(1513) + ")"
+//                );
+            bookGraphRepository.save(line);
+        });
+
+        log.info("progress: " + library.size());
+        keywordsDictionary.forEach((token,bookIdsKeyFrequence)->{
+            IndexTableData line=new IndexTableData(token,bookIdsKeyFrequence);
+            indexTableDataRepository.save(line);
+
+        });
+        booksTitle.forEach( (title,id)->{
+            IndexTitleData line=new IndexTitleData(title,id);
+            indexTitleDataRepository.save(line);
+        });
+        authorBooks.forEach( (author,booksId)->{
+            IndexAuthorData line=new IndexAuthorData(author,booksId);
+            indexAuthorDataRepository.save(line);
+        });
+
+        term2KeywordDictionary.forEach( (term,keyword)->{
+            Term2Keyword line=new Term2Keyword(term,keyword);
+            term2keywordRepository.save(line);
+        });
 
 
         log.info("Saving " + library.size() + " books from memory to local file...");

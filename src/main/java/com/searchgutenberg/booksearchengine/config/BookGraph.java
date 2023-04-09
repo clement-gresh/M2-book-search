@@ -10,8 +10,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Data
 public class BookGraph {
     // dict(book : dict(book, distance))
-    private Map<Integer, Map<Integer, Float>> adjacencyMatrix = new HashMap<>();
-    private Map<Integer, Float> closenessCentrality = new HashMap<>();
+    private Map<Integer, Map<Integer, Float>> adjacencyMatrix ;
+    private Map<Integer, Float> closenessCentrality ;
+
+   public BookGraph(){
+        adjacencyMatrix = new HashMap<>();
+        closenessCentrality = new HashMap<>();
+    }
 
     // jaccardDistance must have an entry with the newbook itself at 1
     public void addBook(Integer newBook, Map<Integer, Float> jaccardDistance){
