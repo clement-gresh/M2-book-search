@@ -10,29 +10,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Data
 public class BookGraph {
     // dict(book : dict(book, distance))
-    private Map<Integer, Map<Integer, Float>> adjacencyMatrix ;
-    private Map<Integer, Float> closenessCentrality ;
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Float>> adjacencyMatrix ;
+    private ConcurrentHashMap<Integer, Float> closenessCentrality ;
 
    public BookGraph(){
-        adjacencyMatrix = new HashMap<>();
-        closenessCentrality = new HashMap<>();
+        adjacencyMatrix = new ConcurrentHashMap<>();
+        closenessCentrality = new ConcurrentHashMap<>();
     }
 
     // jaccardDistance must have an entry with the newbook itself at 1
-    public void addBook(Integer newBook, Map<Integer, Float> jaccardDistance){
+    public void addBook(Integer newBook, ConcurrentHashMap<Integer, Float> jaccardDistance){
         adjacencyMatrix.putIfAbsent(newBook, jaccardDistance);
-        for(Map.Entry<Integer, Map<Integer, Float>> entry : adjacencyMatrix.entrySet()){
+        for(Map.Entry<Integer, ConcurrentHashMap<Integer, Float>> entry : adjacencyMatrix.entrySet()){
             entry.getValue().putIfAbsent(newBook, jaccardDistance.get(entry.getKey()));
         }
     }
     public void removeBook(Integer bookId){
         adjacencyMatrix.remove(bookId);
-        for(Map.Entry<Integer, Map<Integer, Float>> entry : adjacencyMatrix.entrySet()){
+        for(Map.Entry<Integer, ConcurrentHashMap<Integer, Float>> entry : adjacencyMatrix.entrySet()){
             entry.getValue().remove(bookId);
         }
     }
 
-    public void addLine(Integer book, Map<Integer, Float> jaccardDistance, Float closeness){
+    public void addLine(Integer book, ConcurrentHashMap<Integer, Float> jaccardDistance, Float closeness){
         adjacencyMatrix.put(book, jaccardDistance);
         closenessCentrality.put(book, closeness);
     }
@@ -76,7 +76,7 @@ public class BookGraph {
     }
 
     public SortedSet<Map.Entry<Integer, Float>> closestFromBooks(List<Integer> booksIds) {
-        Map<Integer, Float> meanDistances = new HashMap<>();
+        Map<Integer, Float> meanDistances = new ConcurrentHashMap<>();
 
         SortedSet<Map.Entry<Integer, Float>> sortedEntries = booksSortedByDistance(booksIds.get(0));
 

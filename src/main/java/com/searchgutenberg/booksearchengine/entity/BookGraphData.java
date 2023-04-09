@@ -5,7 +5,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @Document("BookGraph")
@@ -13,6 +13,6 @@ import java.util.Map;
 public class BookGraphData {
     @Id
     private Integer bookId;
-    private Map<Integer, Float> jaccardDistance;
+    private ConcurrentHashMap<Integer, Float> jaccardDistance;
     private Float closenessCentrality;
 }
