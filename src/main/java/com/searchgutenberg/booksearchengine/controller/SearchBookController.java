@@ -23,7 +23,6 @@ public class SearchBookController {
     @GetMapping("/searchbycontent/{word}")
     @ResponseBody
     public ResponseEntity<List<Book>> searchBookByContent(@PathVariable String word) {
-        Instant start = Instant.now(); // test
         String[] keywords = word.split("\\s+");
         HashMap<Integer,Integer> booksIdNbOfKeywords = new HashMap<>();
         Arrays.asList(keywords).forEach(keyword -> {
@@ -39,37 +38,13 @@ public class SearchBookController {
         });
 
         List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
-        Instant finish = Instant.now(); // test
-        long timeElapsed = Duration.between(start, finish).toMillis(); // test
-        System.out.println("time for treating \"search by content request\" (ms): " + timeElapsed); // test
         return ResponseEntity.ok(books);
     }
 
 
     @PostMapping(value = "/searchbyregex")
-    /*
-    @GetMapping(value = "/searchbyregex")
-    public ResponseEntity<List<Book>> searchBookByRegex(@NotNull @NotBlank @RequestParam(name="regex", required = true) String input) {
-
-        String[] keywords = input.split("\\s+");
-        HashMap<Integer,Integer>bookIdsKeyFrequence=new HashMap<>();
-        Arrays.asList(keywords).forEach(keyword -> {
-            try {
-                System.out.println("debug "+keyword.toLowerCase());
-                bookIdsKeyFrequence.putAll(searchBookService.getBooksByRegex(keyword.toLowerCase()));
-            } catch (IOException e) {
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-        });
-
-        List<Book> books= searchBookService.getSortedBooks(bookIdsKeyFrequence,false);
-        return ResponseEntity.ok(books);
-    }*/
-
     public ResponseEntity<List<Book>> searchBookByRegex(@RequestBody Map<String,String >requestBody) {
+
         String input=requestBody.get("regex");
 
         String[] keywords = input.split("\\s+");
@@ -147,9 +122,6 @@ public class SearchBookController {
         List<Book> books = new ArrayList<>();
         SortedSet<Map.Entry<Integer, Float>> sortedEntries = bookGraph.booksSortedByDistance(Integer.valueOf(id));
         sortedEntries.forEach(e -> books.add(searchBookService.getBookById(e.getKey())));
-//        for(Book book:books){   // DEBUG
-//            System.out.println("distance: " + bookGraph.getAdjacencyMatrix().get(1513).get(book.getId()));
-//        }
         return ResponseEntity.ok(books);
     }
 
@@ -163,9 +135,6 @@ public class SearchBookController {
         SortedSet<Map.Entry<Integer, Float>> closestFromBooks = bookGraph.closestFromBooks(idsInt);
 
         closestFromBooks.forEach(e -> books.add(searchBookService.getBookById(e.getKey())));
-//        for(Book book:books){   // DEBUG
-//            System.out.println("distance: " + bookGraph.getAdjacencyMatrix().get(1513).get(book.getId()));
-//        }
         return ResponseEntity.ok(books);
     }
 }

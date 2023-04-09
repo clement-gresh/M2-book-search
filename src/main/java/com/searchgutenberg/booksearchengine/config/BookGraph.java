@@ -78,9 +78,6 @@ public class BookGraph {
                 Map.Entry.comparingByValue()
         );
         sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
-//        List<Integer> booksIds = new ArrayList<>();
-//        sortedEntries.forEach(e -> booksIds.add(e.getKey()));
-//        return booksIds;
         return sortedEntries;
     }
 

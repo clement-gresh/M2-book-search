@@ -11,10 +11,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class BooksearchengineApplication {
     //（token，(Book id , key word frequence))
     public static ConcurrentHashMap<String, ConcurrentHashMap<Integer,Integer>> keywordsDictionary;
+    //(Book title , book id )
     public static ConcurrentHashMap<String, Integer> booksTitle;
-
+    //(author , list of book id )
     public static ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer> > authorBooks;
-
+    //(term , stem of the term )
     public static ConcurrentHashMap<String,String > term2KeywordDictionary;
 
     public static BookGraph bookGraph ;

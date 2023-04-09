@@ -33,7 +33,6 @@ public class ProcessBook {
 
 
     /**
-     * set image's and text's URL for a book object
      * index the book,and stock it in the DB
      * @param book a book object to be completed init
      * @return a future task to indicate if the book is processed successfully
@@ -83,10 +82,6 @@ public class ProcessBook {
                 jaccardDistance.put(key, distance);
             });
             bookGraph.addBook(book.getId(), jaccardDistance);
-//        System.out.println(
-//                "New book id: " + book.getId()
-//                + " (id: " + 1513 + ", " + bookGraph.getAdjacencyMatrix().get(book.getId()).get(1513) + ")"
-//        );
 
             return CompletableFuture.completedFuture(true);
         }
@@ -95,11 +90,7 @@ public class ProcessBook {
         }
     }
 
-    /**
-     * get at least one valid URL to download the text of a book
-     * @param format the URLs given by "gutendex" api
-     * @return a valid URL to download txt
-     */
+
     private String getTextURL(Format format){
         if (format.getTextUtf() != null){
             if (format.getTextUtf().endsWith(".txt") || format.getTextUtf().endsWith(".txt.utf-8"))
