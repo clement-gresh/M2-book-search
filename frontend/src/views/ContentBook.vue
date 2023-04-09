@@ -60,7 +60,7 @@
 
 
 <script lang="ts">
-import { ref, onMounted, defineComponent,reactive } from 'vue';
+import { ref, onMounted, defineComponent,reactive,watch } from 'vue';
 import axios from 'axios';
 import TopMenu from '../components/IndexView.vue'
 import { useRoute,useRouter } from 'vue-router';
@@ -96,8 +96,10 @@ export default defineComponent({
         function goBack() {
             router.back();
         }
+
         const relatedBooks = ref([] as Book[]);
         console.log("skip to Content!");
+
         const goContent = (id) => {
             router.push({
                 name: 'content',
@@ -105,7 +107,9 @@ export default defineComponent({
                 id:id
                 },
             });
+            
         };
+        
         onMounted(async () => {
             const response = await axios.get(`http://localhost:8080/getbook/${idBook.value}`);
             Object.assign(book, response.data);
@@ -115,6 +119,16 @@ export default defineComponent({
             relatedBooks.value = responseRB.data.splice(0, 10);
             console.log("im in content page, book.value="+book.authors);
         });
+
+        watch(() => route.query, (newVal) => {
+            console.log('route.query changed:', newVal);
+            Object.assign(routeQuery, newVal);
+            idBook.value = routeQuery.id;
+            window.location.reload();
+            goContent(idBook.value);
+        }, { deep: true });
+
+
         return {
             book,
             relatedBooks,
