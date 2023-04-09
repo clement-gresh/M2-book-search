@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +52,7 @@ public class DownloadBooks {
 
     @Bean
     public List<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
+        Instant start = Instant.now(); // test
         keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
         booksTitle=new ConcurrentHashMap<String, Integer>();
         authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
@@ -158,6 +161,10 @@ public class DownloadBooks {
 
 
         log.info("Saving " + library.size() + " books from memory to local file...");
+
+        Instant finish = Instant.now(); // test
+        long timeElapsed = Duration.between(start, finish).toMillis(); // test
+        System.out.println("time for creating/reloading the DB (ms): " + timeElapsed); // test
         return library;
     }
 

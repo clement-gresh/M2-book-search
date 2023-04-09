@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,7 +23,7 @@ public class SearchBookController {
     @GetMapping("/searchbycontent/{word}")
     @ResponseBody
     public ResponseEntity<List<Book>> searchBookByContent(@PathVariable String word) {
-
+        Instant start = Instant.now(); // test
         String[] keywords = word.split("\\s+");
         HashMap<Integer,Integer> booksIdNbOfKeywords = new HashMap<>();
         Arrays.asList(keywords).forEach(keyword -> {
@@ -37,6 +39,9 @@ public class SearchBookController {
         });
 
         List<Book> books= searchBookService.sortBooksByCloseness(booksIdNbOfKeywords);
+        Instant finish = Instant.now(); // test
+        long timeElapsed = Duration.between(start, finish).toMillis(); // test
+        System.out.println("time for treating \"search by content request\" (ms): " + timeElapsed); // test
         return ResponseEntity.ok(books);
     }
 
