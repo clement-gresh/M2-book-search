@@ -20,12 +20,15 @@ public class BookGraph {
 
     // jaccardDistance must have an entry with the newbook itself at 1
     public void addBook(Integer newBook, ConcurrentHashMap<Integer, Float> jaccardDistance){
-           if (!adjacencyMatrix.isEmpty()) {
-               for (ConcurrentHashMap.Entry<Integer, ConcurrentHashMap<Integer, Float>> entry : adjacencyMatrix.entrySet()) {
+
+       if (!adjacencyMatrix.isEmpty()) {
+           for (ConcurrentHashMap.Entry<Integer, ConcurrentHashMap<Integer, Float>> entry : adjacencyMatrix.entrySet()) {
+               if(entry.getValue() != null) {
                    entry.getValue().putIfAbsent(newBook, jaccardDistance.get(entry.getKey()));
                }
            }
-           adjacencyMatrix.putIfAbsent(newBook, jaccardDistance);
+       }
+       adjacencyMatrix.putIfAbsent(newBook, jaccardDistance);
     }
     public void removeBook(Integer bookId){
         adjacencyMatrix.remove(bookId);
