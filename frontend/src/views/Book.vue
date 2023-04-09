@@ -159,7 +159,7 @@ export default defineComponent({
 
     
     
-    const goContent = (id) => {
+    const goContent = (id:number|string) => {
       router.push({
         name: 'content',
         query: {
