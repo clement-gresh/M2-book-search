@@ -110,16 +110,6 @@ public class SearchBookService {
         });
         return books;
 
-//        SortedSet<Map.Entry<Integer, Float>> sortedEntries = new TreeSet<>(
-//                new Comparator<Map.Entry<Integer, Float>>() {
-//                    @Override
-//                    public int compare(Map.Entry<Integer, Float> e1, Map.Entry<Integer, Float> e2) {
-//                        int res = e1.getValue().compareTo(e2.getValue());
-//                        return res != 0 ? res : 1;
-//                    }
-//                }
-//        );
-//        sortedEntries.addAll(adjacencyMatrix.get(bookId).entrySet());
     }
 
     public List<Book> getTop20Books(){

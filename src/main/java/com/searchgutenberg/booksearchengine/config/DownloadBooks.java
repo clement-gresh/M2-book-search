@@ -51,27 +51,24 @@ public class DownloadBooks {
 
 
     @Bean
-    public List<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException, ClassNotFoundException {
-        Instant start = Instant.now(); // test
+    public List<Book> library(RestTemplate httpRequest, HttpEntity<String> httpEntity) throws IOException {
+
         keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
         booksTitle=new ConcurrentHashMap<String, Integer>();
         authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
         term2KeywordDictionary=new ConcurrentHashMap<>();
         bookGraph=new BookGraph();
-        // if book already stocked in the data base, get them
+        // if the books already stocked in the database, get them
         List<Book>library=bookRepository.findAll();
-        //debug change the number of the while to get the number of the book you want
-        if(library.size()>=70 ){
-           // if(keywordsDictionary!=null){return library;}
+
+        if(library.size()>=1664 ){
+
             List<IndexTableData> indexTable= indexTableDataRepository.findAll();
             List<IndexTitleData> TitleIndex=indexTitleDataRepository.findAll();
             List<IndexAuthorData> AuthorIndex=indexAuthorDataRepository.findAll();
             List<Term2Keyword> term2KeywordList= term2keywordRepository.findAll();
             List<BookGraphData> bookGraphList= bookGraphRepository.findAll();
-//            keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
-//            booksTitle=new ConcurrentHashMap<String, Integer>();
-//            authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
-//            term2KeywordDictionary=new ConcurrentHashMap<>();
+
             for(IndexTableData line:indexTable){
                keywordsDictionary.put(line.getToken(),line.getBookIdsKeyFrequence());
             }
@@ -87,21 +84,17 @@ public class DownloadBooks {
             for(BookGraphData line: bookGraphList){
                 bookGraph.addLine(line.getBookId(), line.getJaccardDistance(), line.getClosenessCentrality());
             }
+
             return library;
         }
 
-        // else, download the 1664 books information and stock them in DB
-//        keywordsDictionary=new ConcurrentHashMap<String,ConcurrentHashMap<Integer,Integer>>();
-//        booksTitle=new ConcurrentHashMap<String, Integer>();
-//        authorBooks=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Integer>>();
-//        term2KeywordDictionary=new ConcurrentHashMap<>();
+        // else, download the 1664 books and stock them in DB
 
-        log.info("First time use, Downloading 1664 books ...");
+        log.info("Use for the first time, Downloading 1664 books ...");
         ResponseEntity<GutendexEntity> result = httpRequest.exchange("http://gutendex.com/books?mime_type=text&languages=en", HttpMethod.GET, httpEntity, GutendexEntity.class);
         ArrayList<Book> gotBooks;
 
-        //debug change the number of the while to get the number of the book you want
-        while (library.size() < 70){
+        while (library.size() < 1664){
             List<CompletableFuture<Boolean>> futures = new ArrayList<>();
             gotBooks = Objects.requireNonNull(result.getBody()).getResults();
             gotBooks = gotBooks.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
@@ -109,7 +102,6 @@ public class DownloadBooks {
             for (Book book: gotBooks){
                 futures.add(processBooks.processBook(book));
             }
-            log.info("books size "+gotBooks.size()+" future size "+futures.size());
             for (int i=0;i<futures.size();i++){
                 CompletableFuture<Boolean> future=futures.get(i);
                 Boolean resultat=future.join();
@@ -131,11 +123,6 @@ public class DownloadBooks {
         bookGraph.getAdjacencyMatrix().forEach((key, value) -> {
             float closenessCentrality = bookGraph.getClosenessCentrality().get(key);
             BookGraphData line = new BookGraphData(key, value, closenessCentrality);
-//                System.out.println(
-//                        "New book id: " + line.getBookId()
-//                                + " (id: " + 1513 + ", "
-//                                + line.getJaccardDistance().get(1513) + ")"
-//                );
             bookGraphRepository.save(line);
         });
 
@@ -160,11 +147,7 @@ public class DownloadBooks {
         });
 
 
-        log.info("Saving " + library.size() + " books from memory to local file...");
-
-        Instant finish = Instant.now(); // test
-        long timeElapsed = Duration.between(start, finish).toMillis(); // test
-        System.out.println("time for creating/reloading the DB (ms): " + timeElapsed); // test
+        log.info("Saving " + library.size() + " books in DB");
         return library;
     }
 
